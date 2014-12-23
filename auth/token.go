@@ -1,76 +1,50 @@
 package auth
 
 import (
-	"fmt"
 	"io/ioutil"
-	"net/http"
 	"time"
 
-	"code.google.com/p/go.net/context"
 	"github.com/dbongo/goapp/logger"
 	"github.com/dbongo/goapp/model"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
 const (
-	privateKey = "keys/app.rsa"
-	publicKey  = "keys/app.rsa.pub"
+	privateKey = "keys/app.rsa"     // openssl genrsa -out app.rsa 1024
+	publicKey  = "keys/app.rsa.pub" // openssl rsa -in app.rsa -pubout > app.rsa.pub
 )
 
-var (
-	signKey   []byte
-	verifyKey []byte
-	err       error
-)
-
-// Token ...
-type Token struct {
-	Data string `json:"auth_token"`
-}
+var signKey, verifyKey []byte
 
 func init() {
-	signKey, err = ioutil.ReadFile(privateKey)
-	if err != nil {
-		logger.Error.Print(err)
+	var err error
+	if signKey, err = ioutil.ReadFile(privateKey); err != nil {
+		logger.Error.Println(err)
 	}
-
-	verifyKey, err = ioutil.ReadFile(publicKey)
-	if err != nil {
-		logger.Error.Print(err)
+	if verifyKey, err = ioutil.ReadFile(publicKey); err != nil {
+		logger.Error.Println(err)
 	}
 }
 
-// GetUser gets the currently authenticated user for the http.Request.
-// The user details will be stored as either a simple API token or JWT bearer token.
-func GetUser(c context.Context, r *http.Request) *model.User {
-	switch {
-	case r.Header.Get("Authorization") != "":
-		return getUserBearer(c, r)
-	default:
-		return nil
-	}
+// TokenInfo ...
+type TokenInfo struct {
+	Raw string `json:"token"`
 }
 
-// JWTToken ...
-func JWTToken(user *model.User) *Token {
+// Token ...
+func Token(user *model.User) *TokenInfo {
 	t := jwt.New(jwt.GetSigningMethod("RS256"))
 	t.Claims["ID"] = user.ID.Hex()
 	t.Claims["email"] = user.Email
 	t.Claims["exp"] = time.Now().Add(time.Minute * 60 * 730).Unix()
 	signed, err := t.SignedString(signKey)
 	if err != nil {
-		logger.Error.Print(err)
+		logger.Error.Println(err)
 	}
-	return &Token{signed}
+	return &TokenInfo{signed}
 }
 
-// getUserBearer gets the currently authenticated user for the given bearer token (JWT)
-func getUserBearer(c context.Context, r *http.Request) *model.User {
-	var tokenstr = r.Header.Get("Authorization")
-	fmt.Sscanf(tokenstr, "Bearer %s", &tokenstr)
-	return UserFromJWT(tokenstr)
-}
-
+// UserFromJWT ...
 func UserFromJWT(token string) *model.User {
 	var t, err = jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return verifyKey, nil

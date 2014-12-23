@@ -1,14 +1,14 @@
 package model
 
 import (
-	"encoding/json"
-	"log"
+	"errors"
 
 	"code.google.com/p/go.crypto/bcrypt"
-	"github.com/dbongo/goapp/db"
-	"github.com/dbongo/goapp/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+
+	"github.com/dbongo/goapp/db"
+	"github.com/dbongo/goapp/logger"
 )
 
 // User ...
@@ -24,43 +24,35 @@ type User struct {
 func (u *User) Save() error {
 	conn, err := db.Connect()
 	if err != nil {
-		log.Fatal(err)
+		logger.Error.Println(err)
+		return err
 	}
 	defer conn.Close()
-	if u.Name == "" || u.Email == "" || u.Username == "" || u.Password == "" {
-		message := "Name/Email/Username/Password cannot be empty."
-		return &errors.ValidationError{Message: message}
+	if u.Email == "" || u.Username == "" || u.Password == "" {
+		return errors.New("email / username / password fields can not be blank")
 	}
 	u.ID = bson.NewObjectId()
 	u.HashPassword()
-	err = conn.Users().Insert(u)
-	if mgo.IsDup(err) {
-		message := "Someone already has that email. Could you try another?"
-		return &errors.ValidationError{Message: message}
-	}
-	return err
+	return conn.Users().Insert(u)
 }
 
 // Delete ...
 func (u *User) Delete() error {
 	conn, err := db.Connect()
 	if err != nil {
-		log.Fatal(err)
+		logger.Error.Println(err)
+		return err
 	}
 	defer conn.Close()
-	err = conn.Users().Remove(bson.M{"email": u.Email})
-	if err == mgo.ErrNotFound {
-		message := "User not found."
-		return &errors.ValidationError{Message: message}
-	}
-	return err
+	return conn.Users().Remove(bson.M{"email": u.Email})
 }
 
 // Update ...
 func (u *User) Update() error {
 	conn, err := db.Connect()
 	if err != nil {
-		log.Fatal(err)
+		logger.Error.Println(err)
+		return err
 	}
 	defer conn.Close()
 	return conn.Users().Update(bson.M{"email": u.Email}, u)
@@ -70,7 +62,7 @@ func (u *User) Update() error {
 func (u *User) HashPassword() {
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error.Println(err)
 	}
 	u.Password = string(hash[:])
 }
@@ -82,13 +74,6 @@ func (u *User) Valid() bool {
 		return true
 	}
 	return false
-}
-
-// ToString returns a user minus their password.
-func (u *User) ToString() string {
-	u.Password = ""
-	user, _ := json.Marshal(u)
-	return string(user)
 }
 
 // FindUserByID ...
@@ -115,10 +100,10 @@ func FindUserByEmail(email string) (*User, error) {
 		return nil, err
 	}
 	defer conn.Close()
-	var user User
-	err = conn.Users().Find(bson.M{"email": email}).One(&user)
+	user := &User{}
+	err = conn.Users().Find(bson.M{"email": email}).One(user)
 	if err == mgo.ErrNotFound {
-		return nil, &errors.ValidationError{Message: "User not found"}
+		return nil, mgo.ErrNotFound
 	}
-	return &user, nil
+	return user, nil
 }

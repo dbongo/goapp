@@ -5,27 +5,19 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/dbongo/goapp/db/store"
+	"github.com/dbongo/app/db/storage"
 
 	"launchpad.net/gocheck"
 )
 
 type hasIndexChecker struct{}
-type hasUniqueIndexChecker struct{}
-
-var HasIndex gocheck.Checker = &hasIndexChecker{}
-var HasUniqueIndex gocheck.Checker = &hasUniqueIndexChecker{}
 
 func (c *hasIndexChecker) Info() *gocheck.CheckerInfo {
 	return &gocheck.CheckerInfo{Name: "HasIndexChecker", Params: []string{"collection", "key"}}
 }
 
-func (c *hasUniqueIndexChecker) Info() *gocheck.CheckerInfo {
-	return &gocheck.CheckerInfo{Name: "HasUniqueField", Params: []string{"collection", "key"}}
-}
-
 func (c *hasIndexChecker) Check(params []interface{}, names []string) (bool, string) {
-	collection, ok := params[0].(*store.Collection)
+	collection, ok := params[0].(*storage.Collection)
 	if !ok {
 		return false, "first parameter should be a Collection"
 	}
@@ -45,8 +37,16 @@ func (c *hasIndexChecker) Check(params []interface{}, names []string) (bool, str
 	return false, ""
 }
 
+var HasIndex gocheck.Checker = &hasIndexChecker{}
+
+type hasUniqueIndexChecker struct{}
+
+func (c *hasUniqueIndexChecker) Info() *gocheck.CheckerInfo {
+	return &gocheck.CheckerInfo{Name: "HasUniqueField", Params: []string{"collection", "key"}}
+}
+
 func (c *hasUniqueIndexChecker) Check(params []interface{}, names []string) (bool, string) {
-	collection, ok := params[0].(*store.Collection)
+	collection, ok := params[0].(*storage.Collection)
 	if !ok {
 		return false, "first parameter should be a Collection"
 	}
@@ -65,6 +65,8 @@ func (c *hasUniqueIndexChecker) Check(params []interface{}, names []string) (boo
 	}
 	return false, ""
 }
+
+var HasUniqueIndex gocheck.Checker = &hasUniqueIndexChecker{}
 
 func Test(t *testing.T) { gocheck.TestingT(t) }
 
@@ -85,10 +87,10 @@ func (s *S) TearDownSuite(c *gocheck.C) {
 }
 
 func (s *S) TestUsers(c *gocheck.C) {
-	store, err := Connect()
+	strg, err := Connect()
 	c.Assert(err, gocheck.IsNil)
-	users := store.Users()
-	usersc := store.Collection("users")
-	c.Assert(users, gocheck.DeepEquals, usersc)
-	c.Assert(users, HasUniqueIndex, []string{"email"})
+	//users := strg.Users()
+	usersc := strg.Collection("users")
+	c.Assert(strg.Users(), gocheck.DeepEquals, usersc)
+	c.Assert(strg.Users(), HasUniqueIndex, []string{"email"})
 }
