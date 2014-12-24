@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="app.css">
   </head>
   <body ng-app='app'>
+
     <nav class='navbar navbar-default' role='navigation' ng-controller='AppCtrl as vm'>
       <div class='container'>
         <div class="navbar-header">
@@ -41,7 +42,9 @@
         </div>
       </div>
     </nav>
+    
     <div ui-view></div>
+
     <!-- build:js angular/angular.js -->
     <script type="text/javascript" src="vendor/angular/angular.js"></script>
     <!-- endbuild -->
@@ -80,5 +83,6 @@
     <script type="text/javascript" src="common/services/users.js"></script>
     <script type="text/javascript" src="app/templates.js"></script>
     <!-- endbuild -->
+
   </body>
 </html>

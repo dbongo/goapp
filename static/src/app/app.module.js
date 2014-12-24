@@ -1,5 +1,4 @@
 (function () {
-  // this module is the entry point into our angular app
   angular.module('app', ['ngResource','ui.router','ui.bootstrap'])
     .config(function ($httpProvider, $urlRouterProvider, $locationProvider) {
       $urlRouterProvider.otherwise('/')

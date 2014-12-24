@@ -5,8 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/dbongo/app/db/storage"
-
+	"github.com/dbongo/goapp/db/storage"
 	"launchpad.net/gocheck"
 )
 
@@ -75,22 +74,21 @@ type S struct{}
 var _ = gocheck.Suite(&S{})
 
 func (s *S) SetUpSuite(c *gocheck.C) {
-	os.Setenv("MONGODB_ADDRESS", "127.0.0.1:27017")
-	os.Setenv("MONGODB_NAME", "testdb")
+	os.Setenv("MONGO_ADDRESS", "127.0.0.1:27017")
+	os.Setenv("MONGO_DATABASE", "appdb_test")
 }
 
 func (s *S) TearDownSuite(c *gocheck.C) {
-	store, err := Connect()
+	strg, err := Connect()
 	c.Assert(err, gocheck.IsNil)
-	defer store.Close()
-	store.Collection("apps").Database.DropDatabase()
+	defer strg.Close()
 }
 
 func (s *S) TestUsers(c *gocheck.C) {
 	strg, err := Connect()
 	c.Assert(err, gocheck.IsNil)
-	//users := strg.Users()
+	users := strg.Users()
 	usersc := strg.Collection("users")
-	c.Assert(strg.Users(), gocheck.DeepEquals, usersc)
-	c.Assert(strg.Users(), HasUniqueIndex, []string{"email"})
+	c.Assert(users, gocheck.DeepEquals, usersc)
+	c.Assert(users, HasUniqueIndex, []string{"email"})
 }

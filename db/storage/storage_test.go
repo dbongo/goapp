@@ -17,45 +17,45 @@ func (s *S) SetUpSuite(c *gocheck.C) {
 }
 
 func (s *S) TearDownSuite(c *gocheck.C) {
-	db, err := MongoDB("127.0.0.1:27017", "testdb")
+	storage, err := MongoDB("127.0.0.1:27017", "appdb_test")
 	c.Assert(err, gocheck.IsNil)
-	defer db.session.Close()
-	db.session.DB("testdb").DropDatabase()
+	defer storage.session.Close()
+	storage.session.DB("appdb_test").DropDatabase()
 }
 
 func (s *S) TearDownTest(c *gocheck.C) {
 	connections = make(map[string]*session)
 }
 
-func (s *S) TestConnectsToTheDatabase(c *gocheck.C) {
-	db, err := MongoDB("127.0.0.1:27017", "testdb")
+func (s *S) TestMongoDBConnectsToTheDatabase(c *gocheck.C) {
+	storage, err := MongoDB("127.0.0.1:27017", "appdb_test")
 	c.Assert(err, gocheck.IsNil)
-	defer db.session.Close()
-	c.Assert(db.session.Ping(), gocheck.IsNil)
+	defer storage.session.Close()
+	c.Assert(storage.session.Ping(), gocheck.IsNil)
 }
 
-func (s *S) TestCopiesConnection(c *gocheck.C) {
-	db, err := MongoDB("127.0.0.1:27017", "testdb")
+func (s *S) TestMongoDBCopiesConnection(c *gocheck.C) {
+	storage, err := MongoDB("127.0.0.1:27017", "appdb_test")
 	c.Assert(err, gocheck.IsNil)
-	defer db.session.Close()
-	db2, err := MongoDB("127.0.0.1:27017", "testdb")
+	defer storage.session.Close()
+	storage2, err := MongoDB("127.0.0.1:27017", "appdb_test")
 	c.Assert(err, gocheck.IsNil)
-	c.Assert(db.session, gocheck.Not(gocheck.Equals), db2.session)
+	c.Assert(storage.session, gocheck.Not(gocheck.Equals), storage2.session)
 }
 
-func (s *S) TestReconnects(c *gocheck.C) {
-	db, err := MongoDB("127.0.0.1:27017", "testdb")
+func (s *S) TestMongoDBReconnects(c *gocheck.C) {
+	storage, err := MongoDB("127.0.0.1:27017", "appdb_test")
 	c.Assert(err, gocheck.IsNil)
-	db.session.Close()
-	db, err = MongoDB("127.0.0.1:27017", "testdb")
+	storage.session.Close()
+	storage, err = MongoDB("127.0.0.1:27017", "appdb_test")
 	c.Assert(err, gocheck.IsNil)
-	err = db.session.Ping()
+	err = storage.session.Ping()
 	c.Assert(err, gocheck.IsNil)
 }
 
-func (s *S) TestConnectionRefused(c *gocheck.C) {
-	db, err := MongoDB("127.0.0.1:27018", "testdb")
-	c.Assert(db, gocheck.IsNil)
+func (s *S) TestMongoDBConnectionRefused(c *gocheck.C) {
+	storage, err := MongoDB("127.0.0.1:27018", "appdb_test")
+	c.Assert(storage, gocheck.IsNil)
 	c.Assert(err, gocheck.NotNil)
 }
 
@@ -64,16 +64,16 @@ func (s *S) TestClose(c *gocheck.C) {
 		r := recover()
 		c.Check(r, gocheck.NotNil)
 	}()
-	db, err := MongoDB("127.0.0.1:27017", "testdb")
+	storage, err := MongoDB("127.0.0.1:27017", "appdb_test")
 	c.Assert(err, gocheck.IsNil)
-	db.Close()
-	err = db.session.Ping()
+	storage.Close()
+	err = storage.session.Ping()
 	c.Check(err, gocheck.NotNil)
 }
 
 func (s *S) TestCollection(c *gocheck.C) {
-	db, _ := MongoDB("127.0.0.1:27017", "testdb")
-	defer db.session.Close()
-	collection := db.Collection("users")
-	c.Assert(collection.FullName, gocheck.Equals, db.name+".users")
+	storage, _ := MongoDB("127.0.0.1:27017", "appdb_test")
+	defer storage.session.Close()
+	collection := storage.Collection("users")
+	c.Assert(collection.FullName, gocheck.Equals, storage.name+".users")
 }

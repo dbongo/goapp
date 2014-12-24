@@ -14,8 +14,8 @@ type logRecord struct {
 
 	time                time.Time
 	ip, method, rawpath string
-	responseBytes       int64
-	responseStatus      int
+	respBytes           int64
+	respStatus          int
 	userAgent, referer  string
 	proto               string
 }
@@ -30,9 +30,9 @@ type logHandler struct {
 
 // RequestLogger ...
 func RequestLogger(h http.Handler) http.Handler {
-	lh := NewLoggingHandler(h, "./logger/http", true)
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		lh.ServeHTTP(w, r)
+	lh := NewLoggingHandler(h, "./logs/http", true)
+	fn := func(rw http.ResponseWriter, req *http.Request) {
+		lh.ServeHTTP(rw, req)
 	}
 	return http.HandlerFunc(fn)
 }
@@ -49,23 +49,23 @@ func NewLoggingHandler(handler http.Handler, dir string, writeStdout bool) http.
 	return h
 }
 
-func (h *logHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	addr := r.RemoteAddr
+func (h *logHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	addr := req.RemoteAddr
 	if colon := strings.LastIndex(addr, ":"); colon != -1 {
 		addr = addr[:colon]
 	}
 	lr := &logRecord{
 		time:           time.Now().UTC(),
 		ip:             addr,
-		method:         r.Method,
-		rawpath:        r.URL.RequestURI(),
-		userAgent:      r.UserAgent(),
-		referer:        r.Referer(),
-		responseStatus: http.StatusOK,
-		proto:          r.Proto,
+		method:         req.Method,
+		rawpath:        req.URL.RequestURI(),
+		userAgent:      req.UserAgent(),
+		referer:        req.Referer(),
+		respStatus:     http.StatusOK,
+		proto:          req.Proto,
 		ResponseWriter: rw,
 	}
-	h.handler.ServeHTTP(lr, r)
+	h.handler.ServeHTTP(lr, req)
 	h.ch <- lr
 }
 
@@ -93,7 +93,7 @@ func (h *logHandler) logFromChannel() {
 				lastFileName = fileName
 			}
 		}
-		logLine := fmt.Sprintf("%s [%s] %q %d %d %q %q\n", lr.ip, dateString, lr.method+" "+lr.rawpath+" "+lr.proto, lr.responseStatus, lr.responseBytes, lr.referer, lr.userAgent)
+		logLine := fmt.Sprintf("%s [%s] %q %d %d %q %q\n", lr.ip, dateString, lr.method+" "+lr.rawpath+" "+lr.proto, lr.respStatus, lr.respBytes, lr.referer, lr.userAgent)
 		if h.stdout {
 			os.Stdout.WriteString(logLine)
 		}
@@ -103,13 +103,13 @@ func (h *logHandler) logFromChannel() {
 	}
 }
 
-func (lr *logRecord) Write(p []byte) (int, error) {
-	written, err := lr.ResponseWriter.Write(p)
-	lr.responseBytes += int64(written)
+func (lr *logRecord) Write(b []byte) (int, error) {
+	written, err := lr.ResponseWriter.Write(b)
+	lr.respBytes += int64(written)
 	return written, err
 }
 
 func (lr *logRecord) WriteHeader(status int) {
-	lr.responseStatus = status
+	lr.respStatus = status
 	lr.ResponseWriter.WriteHeader(status)
 }

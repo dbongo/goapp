@@ -9,16 +9,16 @@ import (
 
 // Recovery is a middleware that recovers from panics, logs the panic (and a backtrace), and returns a HTTP 500 (Internal Server Error) status if possible.
 func Recovery(h http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
+	fn := func(rw http.ResponseWriter, req *http.Request) {
 		defer func() {
-			if e := recover(); e != nil {
-				logger.Error.Printf("Recovering from error '%s'", e)
+			if err := recover(); err != nil {
+				logger.Error.Printf("Recovering from error '%s'", err)
 				logger.Trace.Printf(string(debug.Stack()))
-				http.Error(w, http.StatusText(500), 500)
+				http.Error(rw, http.StatusText(500), 500)
 				return
 			}
 		}()
-		h.ServeHTTP(w, r)
+		h.ServeHTTP(rw, req)
 	}
 	return http.HandlerFunc(fn)
 }

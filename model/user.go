@@ -2,13 +2,13 @@ package model
 
 import (
 	"errors"
+	"log"
 
 	"code.google.com/p/go.crypto/bcrypt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/dbongo/goapp/db"
-	"github.com/dbongo/goapp/logger"
 )
 
 // User ...
@@ -24,7 +24,6 @@ type User struct {
 func (u *User) Save() error {
 	conn, err := db.Connect()
 	if err != nil {
-		logger.Error.Println(err)
 		return err
 	}
 	defer conn.Close()
@@ -40,7 +39,6 @@ func (u *User) Save() error {
 func (u *User) Delete() error {
 	conn, err := db.Connect()
 	if err != nil {
-		logger.Error.Println(err)
 		return err
 	}
 	defer conn.Close()
@@ -51,7 +49,6 @@ func (u *User) Delete() error {
 func (u *User) Update() error {
 	conn, err := db.Connect()
 	if err != nil {
-		logger.Error.Println(err)
 		return err
 	}
 	defer conn.Close()
@@ -62,7 +59,7 @@ func (u *User) Update() error {
 func (u *User) HashPassword() {
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		logger.Error.Println(err)
+		log.Fatal(err)
 	}
 	u.Password = string(hash[:])
 }
@@ -104,6 +101,8 @@ func FindUserByEmail(email string) (*User, error) {
 	err = conn.Users().Find(bson.M{"email": email}).One(user)
 	if err == mgo.ErrNotFound {
 		return nil, mgo.ErrNotFound
+	} else if err != nil {
+		return nil, err
 	}
 	return user, nil
 }

@@ -9,10 +9,10 @@ import (
 
 // RequestID ...
 func RequestID(c *web.C, h http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
+	fn := func(rw http.ResponseWriter, req *http.Request) {
 		reqID := middleware.GetReqID(*c)
-		w.Header().Set("Request-Id", reqID)
-		h.ServeHTTP(w, r)
+		rw.Header().Set("Request-Id", reqID)
+		h.ServeHTTP(rw, req)
 	}
 	return http.HandlerFunc(fn)
 }

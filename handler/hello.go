@@ -8,11 +8,11 @@ import (
 )
 
 // HelloWorld ...
-func HelloWorld(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, world!")
+func HelloWorld(rw http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(rw, "Hello, world!")
 }
 
 // HelloName ...
-func HelloName(c web.C, w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, %s!", c.URLParams["name"])
+func HelloName(c web.C, rw http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(rw, "Hello, %s!", c.URLParams["name"])
 }

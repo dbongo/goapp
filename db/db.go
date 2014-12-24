@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	defaultDBAddress = "127.0.0.1:27017"
-	defaultDBName    = "appdb"
+	defaultAddress = "127.0.0.1:27017"
+	defaultName    = "appdb"
 )
 
 // Storage ...
@@ -20,11 +20,11 @@ type Storage struct {
 func connect() (*storage.Storage, error) {
 	addr := os.Getenv("MONGODB_ADDRESS")
 	if addr == "" {
-		addr = defaultDBAddress
+		addr = defaultAddress
 	}
 	name := os.Getenv("MONGODB_NAME")
 	if name == "" {
-		name = defaultDBName
+		name = defaultName
 	}
 	return storage.MongoDB(addr, name)
 }
@@ -41,8 +41,12 @@ func Connect() (*Storage, error) {
 
 // Users returns the users collection from mongo.
 func (s *Storage) Users() *storage.Collection {
-	email := mgo.Index{Key: []string{"email"}, Unique: true, Background: false}
+	emailIndex := mgo.Index{
+		Key:        []string{"email"},
+		Unique:     true,
+		Background: true,
+	}
 	c := s.Collection("users")
-	c.EnsureIndex(email)
+	c.EnsureIndex(emailIndex)
 	return c
 }
