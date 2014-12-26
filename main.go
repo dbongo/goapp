@@ -34,6 +34,8 @@ var (
 )
 
 func init() {
+	logger.Info.Println("intializing server")
+
 	// load app env variables
 	gotenv.Load(".env")
 
@@ -61,12 +63,9 @@ func init() {
 }
 
 func main() {
-	logger.Info.Println("intializing server")
-
 	goji.Post("/register", register)
 	goji.Post("/login", login)
 	goji.Handle("/api/*", mux)
-
 	logger.Info.Println("server listening on :8000")
 	goji.Serve()
 }

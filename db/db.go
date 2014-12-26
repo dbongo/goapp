@@ -18,11 +18,11 @@ type Storage struct {
 }
 
 func connect() (*storage.Storage, error) {
-	addr := os.Getenv("MONGODB_ADDRESS")
+	addr := os.Getenv("MONGODB_PORT_27017_TCP_ADDR")
 	if addr == "" {
 		addr = defaultAddress
 	}
-	name := os.Getenv("MONGODB_NAME")
+	name := os.Getenv("DB_NAME")
 	if name == "" {
 		name = defaultName
 	}
@@ -48,5 +48,6 @@ func (s *Storage) Users() *storage.Collection {
 	}
 	c := s.Collection("users")
 	c.EnsureIndex(emailIndex)
+	//storage.LogStats()
 	return c
 }
