@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/dbongo/goapp/db"
+	"github.com/dbongo/hackapp/db"
 
 	"gopkg.in/mgo.v2"
 	"launchpad.net/gocheck"

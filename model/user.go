@@ -8,7 +8,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/dbongo/goapp/db"
+	"github.com/dbongo/hackapp/db"
 )
 
 // User ...

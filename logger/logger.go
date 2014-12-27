@@ -14,24 +14,13 @@ var (
 	Error   *log.Logger // Critical problem
 )
 
-// func init() {
-// 	file, err := os.OpenFile("./goapp.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-// 	if err != nil {
-// 		log.Fatalln("Failed to open error log file:", err)
-// 	}
-// 	Trace = log.New(ioutil.Discard, "TRACE: ", log.Ldate|log.Ltime|log.Lshortfile)
-// 	Info = log.New(io.MultiWriter(file, os.Stdout), "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-// 	Warning = log.New(file, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
-// 	Error = log.New(io.MultiWriter(file, os.Stderr), "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
-// }
-
 func init() {
-	file, err := os.OpenFile("./goapp.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("./hackapp.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalln("Failed to open error log file:", err)
 	}
 	Trace = log.New(ioutil.Discard, "TRACE: ", log.Ldate|log.Ltime|log.Lshortfile)
-	Info = log.New(io.MultiWriter(file, os.Stdout), "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Info = log.New(file, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Warning = log.New(io.MultiWriter(file, os.Stdout), "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Error = log.New(io.MultiWriter(file, os.Stderr), "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 }

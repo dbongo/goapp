@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/dbongo/goapp/db/storage"
+	"github.com/dbongo/hackapp/db/storage"
 	"launchpad.net/gocheck"
 )
 

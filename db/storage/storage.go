@@ -90,25 +90,7 @@ func (s *Storage) DB() *mgo.Database {
 	return s.session.DB(s.name)
 }
 
-// LogStats ...
-// func LogStats() {
-// 	stats := mgo.GetStats()
-// 	logger.Info.Printf(
-// 		"Clusters %d MasterConns %d SlaveConns %d SentOps %d ReceivedOps %d ReceivedDocs %d SocketsAlive %d SocketsInUse %d SocketRefs %d",
-// 		stats.Clusters,
-// 		stats.MasterConns,
-// 		stats.SlaveConns,
-// 		stats.SentOps,
-// 		stats.ReceivedOps,
-// 		stats.ReceivedDocs,
-// 		stats.SocketsAlive,
-// 		stats.SocketsInUse,
-// 		stats.SocketRefs,
-// 	)
-// }
-
 func init() {
-	//mgo.SetStats(true)
 	ticker = time.NewTicker(time.Second)
 	go retire(ticker)
 }
