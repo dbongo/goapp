@@ -24,7 +24,7 @@ type logHandler struct {
 }
 
 // log format
-// 2014/12/27 08:43:01 127.0.0.1 POST /login 200 HTTP/1.1 289 Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+// [127.0.0.1] [2014/12/27 08:43:01] POST /login 200 HTTP/1.1 289 Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
 func (lh *logHandler) logFromChannel() {
 	for {
 		lr := <-lh.ch
@@ -39,9 +39,9 @@ func (lh *logHandler) logFromChannel() {
 			lr.time.Second())
 
 		logLine := fmt.Sprintf(
-			"%s %s %s %s %d %s %d %s %s\n",
-			dateString,
+			"[%s] [%s] %s %s %d %s %d %s %s\n",
 			lr.ip,
+			dateString,
 			lr.method,
 			lr.rawpath,
 			lr.responseStatus,
