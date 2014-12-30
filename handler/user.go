@@ -4,83 +4,69 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dbongo/hackapp/logger"
 	"github.com/dbongo/hackapp/model"
 	"github.com/dbongo/hackapp/token"
-	"golang.org/x/crypto/bcrypt"
 )
+
+type loginUser struct {
+	Email    string
+	Password string
+}
+
+type registerUser struct {
+	Email    string
+	Username string
+	Password string
+}
+
+type responseUser struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
+}
 
 // Login ...
 func Login(rw http.ResponseWriter, req *http.Request) {
-	user := new(model.User)
+	lu := loginUser{}
 	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(user); err != nil {
-		logger.Error.Println(err)
-		rw.WriteHeader(http.StatusBadRequest)
+	if err := json.NewDecoder(req.Body).Decode(&lu); err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := authenticate(user); err != nil {
-		logger.Error.Println(err)
-		rw.WriteHeader(http.StatusUnauthorized)
+	user, err := model.AuthUser(lu.Email, lu.Password)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	response := struct {
-		Token string `json:"token"`
-	}{token.New(user.Email)}
-
+	t, err := token.New(user.Email)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	response := responseUser{user.Email, user.Username, t.Raw}
 	rw.WriteHeader(http.StatusOK)
 	json.NewEncoder(rw).Encode(&response)
 }
 
 // Register ...
 func Register(rw http.ResponseWriter, req *http.Request) {
-	user := new(model.User)
+	ru := registerUser{}
 	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(user); err != nil {
-		logger.Error.Println(err)
-		rw.WriteHeader(http.StatusBadRequest)
+	if err := json.NewDecoder(req.Body).Decode(&ru); err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := user.Save(); err != nil {
-		logger.Error.Println(err)
-		rw.WriteHeader(http.StatusBadRequest)
+	user, err := model.NewUser(ru.Email, ru.Username, ru.Password)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	response := struct {
-		Token string `json:"token"`
-	}{token.New(user.Email)}
-
+	t, err := token.New(user.Email)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	response := responseUser{user.Email, user.Username, t.Raw}
 	rw.WriteHeader(http.StatusCreated)
 	json.NewEncoder(rw).Encode(&response)
 }
-
-func authenticate(u *model.User) error {
-	user, err := model.FindUserByEmail(u.Email)
-	if err != nil {
-		return err
-	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(u.Password)); err != nil {
-		return err
-	}
-	return nil
-}
-
-// // CurrentUser ...
-// func CurrentUser(c web.C, w http.ResponseWriter, r *http.Request) {
-// 	var user = ToUser(c)
-// 	if user == nil {
-// 		w.WriteHeader(http.StatusUnauthorized)
-// 		return
-// 	}
-// 	// return private data for the currently authenticated user,
-// 	// specifically, their auth token.
-// 	data := struct {
-// 		*model.User
-// 		Token string `json:"token"`
-// 	}{user, user.Token}
-// 	json.NewEncoder(w).Encode(&data)
-// }

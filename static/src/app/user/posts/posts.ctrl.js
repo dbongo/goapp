@@ -2,6 +2,7 @@
 	angular.module('app')
 		.controller('PostsCtrl', function PostsCtrl(Posts, Auth) {
 			var vm = this
+
 			vm.posts = []
 			vm.addPost = addPost
 
@@ -14,7 +15,8 @@
 					Posts.create({
 						username: Auth.getCurrentUser().username,
 						body: vm.postBody
-					}).then(function(res) {
+					})
+					.then(function(res) {
 						vm.postBody = null
 						vm.posts.push(res.data)
 					})

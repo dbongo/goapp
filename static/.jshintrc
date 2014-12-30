@@ -6,7 +6,7 @@
     "forin": true,
     "freeze": true,
     "immed": true,
-    "indent": 2,
+    "indent": 4,
     "latedef": "nofunc",
     "laxcomma": true,
     "maxcomplexity": 10,

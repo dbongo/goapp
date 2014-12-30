@@ -7,15 +7,10 @@ import (
 
 	"github.com/dbongo/hackapp/logger"
 	"github.com/dbongo/hackapp/model"
+	"github.com/dbongo/hackapp/testkeys"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/zenazn/goji/web"
-)
-
-// openssl genrsa -out certs/jwt.rsa 1024
-// openssl rsa -in certs/jwt.rsa -pubout > certs/jwt.rsa.pub
-const (
-	privateKey = "certs/jwt.rsa"
-	publicKey  = "certs/jwt.rsa.pub"
 )
 
 var (
@@ -26,25 +21,12 @@ var (
 
 // initialize keys for signing/verifying jwt tokens
 func init() {
-	if signKey, err = ioutil.ReadFile(privateKey); err != nil {
+	if signKey, err = ioutil.ReadFile(testkeys.Private); err != nil {
 		logger.Error.Println(err)
 	}
-	if verifyKey, err = ioutil.ReadFile(publicKey); err != nil {
+	if verifyKey, err = ioutil.ReadFile(testkeys.Public); err != nil {
 		logger.Error.Println(err)
 	}
-}
-
-// New generates signed JWT token in string format
-func New(email string) string {
-	t := jwt.New(jwt.GetSigningMethod("RS256"))
-	t.Claims["email"] = email
-	t.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-	token, err := t.SignedString(signKey)
-	if err != nil {
-		logger.Error.Println(err)
-		return ""
-	}
-	return token
 }
 
 // Validation ...
@@ -61,6 +43,20 @@ func Validation(c *web.C, h http.Handler) http.Handler {
 		h.ServeHTTP(rw, req)
 	}
 	return http.HandlerFunc(fn)
+}
+
+// New generates signed JWT token in string format
+func New(email string) (*jwt.Token, error) {
+	token := jwt.New(jwt.GetSigningMethod("RS256"))
+	token.Claims["email"] = email
+	token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	token.Raw, err = token.SignedString(signKey)
+	if err != nil {
+		logger.Error.Printf("%v", err)
+		return nil, err
+	}
+	token.Valid = true
+	return token, nil
 }
 
 // UserFromToken ...

@@ -10,7 +10,7 @@ import (
 func SetHeaders(c *web.C, h http.Handler) http.Handler {
 	fn := func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Add("Access-Control-Allow-Origin", "*")
-		rw.Header().Add("Content-Type", "application/json")
+		rw.Header().Add("Content-Type", "application/json; charset=utf-8")
 		h.ServeHTTP(rw, req)
 	}
 	return http.HandlerFunc(fn)

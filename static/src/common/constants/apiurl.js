@@ -1,4 +1,4 @@
-(function () {
-  angular.module('app')
-    .constant('API_URL', 'http://localhost:3000')
+(function() {
+	angular.module('app')
+		.constant('API_URL', 'http://localhost:3000')
 })();

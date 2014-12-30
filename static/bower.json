@@ -1,21 +1,21 @@
 {
-  "name": "goapp",
-  "version": "0.0.1",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "test"
-  ],
-  "dependencies": {
-    "angular": "latest",
-    "angular-ui-router": "latest",
-    "bootstrap": "latest",
-    "font-awesome": "latest",
-    "angular-resource": "latest",
-    "angular-bootstrap": "latest"
-  },
-  "devDependencies": {
-    "angular-mocks": "latest",
-    "angular-scenario": "latest"
-  }
+	"name": "hackapp",
+	"version": "0.0.1",
+	"ignore": [
+		"**/.*",
+		"node_modules",
+		"test"
+	],
+	"dependencies": {
+		"angular": "latest",
+		"angular-ui-router": "latest",
+		"bootstrap": "latest",
+		"font-awesome": "latest",
+		"angular-resource": "latest",
+		"angular-bootstrap": "latest"
+	},
+	"devDependencies": {
+		"angular-mocks": "latest",
+		"angular-scenario": "latest"
+	}
 }
