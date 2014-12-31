@@ -4,7 +4,6 @@ import (
 	"github.com/dbongo/hackapp/handler"
 	ha "github.com/dbongo/hackapp/middleware"
 	"github.com/dbongo/hackapp/token"
-
 	"github.com/zenazn/goji/web"
 	"github.com/zenazn/goji/web/middleware"
 )

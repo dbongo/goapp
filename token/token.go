@@ -2,10 +2,10 @@ package token
 
 import (
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/dbongo/hackapp/logger"
 	"github.com/dbongo/hackapp/model"
 	"github.com/dbongo/hackapp/testkeys"
 
@@ -22,22 +22,22 @@ var (
 // initialize keys for signing/verifying jwt tokens
 func init() {
 	if signKey, err = ioutil.ReadFile(testkeys.Private); err != nil {
-		logger.Error.Println(err)
+		log.Fatal(err)
 	}
 	if verifyKey, err = ioutil.ReadFile(testkeys.Public); err != nil {
-		logger.Error.Println(err)
+		log.Fatal(err)
 	}
 }
 
 // Validation ...
 func Validation(c *web.C, h http.Handler) http.Handler {
 	fn := func(rw http.ResponseWriter, req *http.Request) {
-		token, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+		token, _ := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
 			return verifyKey, nil
 		})
-		if !token.Valid || err != nil {
-			rw.WriteHeader(http.StatusUnauthorized)
-			logger.Error.Printf("%v", err)
+		if !token.Valid {
+			msg := "invalid access_token"
+			http.Error(rw, msg, http.StatusUnauthorized)
 			return
 		}
 		h.ServeHTTP(rw, req)
@@ -52,7 +52,6 @@ func New(email string) (*jwt.Token, error) {
 	token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 	token.Raw, err = token.SignedString(signKey)
 	if err != nil {
-		logger.Error.Printf("%v", err)
 		return nil, err
 	}
 	token.Valid = true

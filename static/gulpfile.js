@@ -15,7 +15,8 @@ var paths = {
 		'./src/app/**/*.module.js',
 		'./src/app/**/*.js',
 		'./src/common/**/*.js'
-	]
+	],
+	dest: '/Users/dbongo/www'
 }
 
 gulp.task('analyze', function() {
@@ -41,28 +42,28 @@ gulp.task('scripts', ['templatecache', 'analyze'], function() {
 			single_quotes: true
 		})]
 	}))
-	.pipe(gulp.dest('./dist'))
+	.pipe(gulp.dest(paths.dest))
 })
 
 gulp.task('vendor', function() {
 	return gulp.src(paths.vendor)
-	.pipe(gulp.dest('./dist'))
+	.pipe(gulp.dest(paths.dest))
 })
 
 gulp.task('favicon', function() {
 	return gulp.src('./src/favicon.ico')
-	.pipe(gulp.dest('./dist'))
+	.pipe(gulp.dest(paths.dest))
 })
 
 gulp.task('styles', function() {
 	return gulp.src(paths.styles)
 	.pipe($.less())
-	.pipe(gulp.dest('./dist'))
+	.pipe(gulp.dest(paths.dest))
 })
 
 gulp.task('server', function() {
 	$.connect.server({
-		root: 'dist',
+		root: paths.dest,
 		port: 3000,
 		livereload: true
 	})

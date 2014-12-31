@@ -4,102 +4,119 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
-type logRecord struct {
-	http.ResponseWriter
-
-	time                      time.Time
-	ip, method, rawpath       string
-	responseStatus            int
-	responseBytes             int64
-	proto, userAgent, referer string
+// Options is a struct for specifying configuration parameters for the
+// Logger middleware.
+type Options struct {
+	Prefix               string
+	DisableAutoBrackets  bool
+	RemoteAddressHeaders []string
 }
 
-type logHandler struct {
-	ch      chan *logRecord
-	handler http.Handler
-}
+// Logger ...
+type Logger struct {
+	Handler http.Handler
 
-// format:
-// [::1] [2014/12/30 13:53:44] HTTP/1.1  /login  POST (200) 490 bytes  curl/7.37.1
-func (lh *logHandler) logFromChannel() {
-	for {
-		lr := <-lh.ch
-
-		dateString := fmt.Sprintf(
-			"%04d/%02d/%02d %02d:%02d:%02d",
-			lr.time.Year(),
-			lr.time.Month(),
-			lr.time.Day(),
-			lr.time.Hour(),
-			lr.time.Minute(),
-			lr.time.Second())
-
-		logLine := fmt.Sprintf(
-			"%s [%s] %s  %s  %s (%d) %d bytes  %s %s\n",
-			lr.ip,
-			dateString,
-			lr.proto,
-			lr.rawpath,
-			lr.method,
-			lr.responseStatus,
-			lr.responseBytes,
-			lr.userAgent,
-			lr.referer)
-
-		os.Stdout.WriteString(logLine)
-	}
+	ch  chan *record
+	opt Options
 }
 
 // HTTPLogger ...
 func HTTPLogger(h http.Handler) http.Handler {
-	hl := NewHTTPLogger(h)
+	l := newHTTPLogger(h)
 	fn := func(rw http.ResponseWriter, req *http.Request) {
-		hl.ServeHTTP(rw, req)
+		l.ServeHTTP(rw, req)
 	}
 	return http.HandlerFunc(fn)
 }
 
-// NewHTTPLogger ...
-func NewHTTPLogger(handler http.Handler) http.Handler {
-	lh := &logHandler{
-		ch:      make(chan *logRecord, 1000),
-		handler: handler,
-	}
-	go lh.logFromChannel()
-	return lh
-}
-
-func (lh *logHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (l *Logger) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	addr := req.RemoteAddr
-	if colon := strings.LastIndex(addr, ":"); colon != -1 {
-		addr = addr[:colon]
+	for _, headerKey := range l.opt.RemoteAddressHeaders {
+		if val := req.Header.Get(headerKey); len(val) > 0 {
+			addr = val
+			break
+		}
 	}
-	lr := &logRecord{
+	r := &record{
 		ResponseWriter: rw,
-		time:           time.Now(),
+		start:          time.Now().Local(),
 		ip:             addr,
 		method:         req.Method,
 		rawpath:        req.RequestURI,
 		responseStatus: http.StatusOK,
 		proto:          req.Proto,
 		userAgent:      req.UserAgent(),
-		referer:        req.Referer(),
 	}
-	lh.handler.ServeHTTP(lr, req)
-	lh.ch <- lr
+	l.Handler.ServeHTTP(r, req)
+	l.ch <- r
 }
 
-func (lr *logRecord) Write(b []byte) (int, error) {
-	written, err := lr.ResponseWriter.Write(b)
-	lr.responseBytes += int64(written)
+func (r *record) Write(b []byte) (int, error) {
+	written, err := r.ResponseWriter.Write(b)
+	r.responseBytes += int64(written)
 	return written, err
 }
 
-func (lr *logRecord) WriteHeader(status int) {
-	lr.responseStatus = status
-	lr.ResponseWriter.WriteHeader(status)
+func (r *record) WriteHeader(status int) {
+	r.responseStatus = status
+	r.ResponseWriter.WriteHeader(status)
+}
+
+type record struct {
+	http.ResponseWriter
+
+	start               time.Time
+	ip, method, rawpath string
+	responseStatus      int
+	responseBytes       int64
+	proto, userAgent    string
+}
+
+func newHTTPLogger(h http.Handler) http.Handler {
+	o := Options{"hackapp", false, []string{"X-Forwarded-Proto"}}
+	l := &Logger{
+		Handler: h,
+		ch:      make(chan *record, 1000),
+		opt:     o,
+	}
+	go l.logResponse()
+	return l
+}
+
+// [hackapp] 2014/12/30 20:41:41 [::1]:62629 GET /api/hello 200 13b 437.126µs HTTP/1.1 curl/7.37.1
+// [hackapp] 2014/12/30 20:47:04 [::1]:62930 POST /login 200 490b 224.032597ms HTTP/1.1 curl/7.37.1
+func (l *Logger) logResponse() {
+	for {
+		lr := <-l.ch
+		timeStamp := fmt.Sprintf(
+			"%04d/%02d/%02d %02d:%02d:%02d",
+			lr.start.Year(),
+			lr.start.Month(),
+			lr.start.Day(),
+			lr.start.Hour(),
+			lr.start.Minute(),
+			lr.start.Second(),
+		)
+		prefix := l.opt.Prefix
+		if len(prefix) > 0 && l.opt.DisableAutoBrackets == false {
+			prefix = "[" + prefix + "]"
+		}
+		logRecord := fmt.Sprintf(
+			"%s %s %s %s %s %d %db %v %s %s\n",
+			prefix,
+			timeStamp,
+			lr.ip,
+			lr.method,
+			lr.rawpath,
+			lr.responseStatus,
+			lr.responseBytes,
+			time.Since(lr.start),
+			lr.proto,
+			lr.userAgent,
+		)
+		os.Stdout.WriteString(logRecord)
+	}
 }
