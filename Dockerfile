@@ -5,7 +5,7 @@ ADD . /go/src/github.com/dbongo/hackapp
 WORKDIR /go/src/github.com/dbongo/hackapp
 
 RUN go get -d ./...
-RUN go install ./...
+RUN go build
 
-EXPOSE 8000
-ENTRYPOINT ["hackapp"]
+EXPOSE 3000
+ENTRYPOINT ["./hackapp"]
