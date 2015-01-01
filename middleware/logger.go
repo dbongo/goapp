@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-// Options is a struct for specifying configuration parameters for the
+// Config is a struct for specifying configuration parameters for the
 // Logger middleware.
-type Options struct {
+type Config struct {
 	Prefix               string
 	DisableAutoBrackets  bool
 	RemoteAddressHeaders []string
@@ -17,10 +17,10 @@ type Options struct {
 
 // Logger ...
 type Logger struct {
-	Handler http.Handler
+	http.Handler
 
-	ch  chan *record
-	opt Options
+	ch   chan *record
+	conf Config
 }
 
 // HTTPLogger ...
@@ -34,7 +34,7 @@ func HTTPLogger(h http.Handler) http.Handler {
 
 func (l *Logger) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	addr := req.RemoteAddr
-	for _, headerKey := range l.opt.RemoteAddressHeaders {
+	for _, headerKey := range l.conf.RemoteAddressHeaders {
 		if val := req.Header.Get(headerKey); len(val) > 0 {
 			addr = val
 			break
@@ -42,7 +42,7 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	r := &record{
 		ResponseWriter: rw,
-		start:          time.Now().Local(),
+		start:          time.Now().UTC(),
 		ip:             addr,
 		method:         req.Method,
 		rawpath:        req.RequestURI,
@@ -76,11 +76,11 @@ type record struct {
 }
 
 func newHTTPLogger(h http.Handler) http.Handler {
-	o := Options{"hackapp", false, []string{"X-Forwarded-Proto"}}
+	c := Config{"hackapp", false, []string{"X-Forwarded-Proto"}}
 	l := &Logger{
 		Handler: h,
 		ch:      make(chan *record, 1000),
-		opt:     o,
+		conf:    c,
 	}
 	go l.logResponse()
 	return l
@@ -100,8 +100,8 @@ func (l *Logger) logResponse() {
 			lr.start.Minute(),
 			lr.start.Second(),
 		)
-		prefix := l.opt.Prefix
-		if len(prefix) > 0 && l.opt.DisableAutoBrackets == false {
+		prefix := l.conf.Prefix
+		if len(prefix) > 0 && l.conf.DisableAutoBrackets == false {
 			prefix = "[" + prefix + "]"
 		}
 		logRecord := fmt.Sprintf(

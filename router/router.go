@@ -4,6 +4,7 @@ import (
 	"github.com/dbongo/hackapp/handler"
 	ha "github.com/dbongo/hackapp/middleware"
 	"github.com/dbongo/hackapp/token"
+
 	"github.com/zenazn/goji/web"
 	"github.com/zenazn/goji/web/middleware"
 )
@@ -17,10 +18,10 @@ func init() {
 	// initialize app router / middleware
 	app = web.New()
 	app.Use(middleware.RequestID)
-	app.Use(middleware.AutomaticOptions)
 	app.Use(ha.RequestID)
 	app.Use(ha.HTTPLogger)
 	app.Use(ha.Recovery)
+	app.Use(ha.Options)
 	app.Use(ha.SetHeaders)
 	app.Post("/login", handler.Login)
 	app.Post("/register", handler.Register)
