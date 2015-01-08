@@ -2,8 +2,7 @@ angular.module('hackapp').service('Auth', function Auth($http, TokenFactory, API
   var currentUser = {}
 
   function login(user) {
-    return $http.post(API_URL + '/auth/login', user)
-    .then(function(res) {
+    return $http.post(API_URL + '/auth/login', user).then(function(res) {
       currentUser = res.data
       TokenFactory.set(currentUser.token)
       return res.data
@@ -11,8 +10,7 @@ angular.module('hackapp').service('Auth', function Auth($http, TokenFactory, API
   }
 
   function register(user) {
-    return $http.post(API_URL + '/auth/register', user)
-    .then(function(res) {
+    return $http.post(API_URL + '/auth/register', user).then(function(res) {
       currentUser = res.data
       TokenFactory.set(currentUser.token)
       return res.data

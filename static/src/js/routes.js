@@ -34,7 +34,9 @@ angular.module('hackapp').config(function($httpProvider, $stateProvider, $urlRou
 }).run(function($rootScope, $location, $state, $window, Auth) {
 
   $rootScope.$on('$stateChangeStart', function(event, next) {
-    if (next.authenticate) $state.go('login')
+    if (next.authenticate) {
+      $state.go('login')
+    }
   })
 
   $rootScope.$on('Auth:Required', function() {

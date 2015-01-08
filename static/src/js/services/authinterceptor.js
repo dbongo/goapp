@@ -3,8 +3,9 @@ angular.module('hackapp').factory('AuthInterceptor', function AuthInterceptor($q
   function request(config) {
     config.headers = config.headers || {}
     var token = TokenFactory.get()
-    if (token)
+    if (token) {
       config.headers.Authorization = 'Bearer ' + token
+    }
     return config
   }
 

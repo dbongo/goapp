@@ -11,10 +11,12 @@ angular.module('hackapp').controller('LoginCtrl', function LoginCtrl($state, Aut
       Auth.login({
         email: vm.user.email,
         password: vm.user.password
-      }).then(function() {
+      })
+      .then(function() {
         vm.alerts = []
         $state.go('posts')
-      }).catch(function(err) {
+      })
+      .catch(function(err) {
         vm.alerts.push({
           type: "danger",
           msg: err.message
