@@ -38,7 +38,9 @@ angular.module('hackapp').config(['$httpProvider', '$stateProvider', '$urlRouter
 }]).run(['$rootScope', '$location', '$state', '$window', 'Auth', function($rootScope, $location, $state, $window, Auth) {
 
   $rootScope.$on('$stateChangeStart', function(event, next) {
-    if (next.authenticate) $state.go('login')
+    if (next.authenticate) {
+      $state.go('login')
+    }
   })
 
   $rootScope.$on('Auth:Required', function() {
@@ -74,10 +76,12 @@ angular.module('hackapp').controller('LoginCtrl', ['$state', 'Auth', function Lo
       Auth.login({
         email: vm.user.email,
         password: vm.user.password
-      }).then(function() {
+      })
+      .then(function() {
         vm.alerts = []
         $state.go('posts')
-      }).catch(function(err) {
+      })
+      .catch(function(err) {
         vm.alerts.push({
           type: "danger",
           msg: err.message
@@ -171,8 +175,7 @@ angular.module('hackapp').service('Auth', ['$http', 'TokenFactory', 'API_URL', f
   var currentUser = {}
 
   function login(user) {
-    return $http.post(API_URL + '/auth/login', user)
-    .then(function(res) {
+    return $http.post(API_URL + '/auth/login', user).then(function(res) {
       currentUser = res.data
       TokenFactory.set(currentUser.token)
       return res.data
@@ -180,8 +183,7 @@ angular.module('hackapp').service('Auth', ['$http', 'TokenFactory', 'API_URL', f
   }
 
   function register(user) {
-    return $http.post(API_URL + '/auth/register', user)
-    .then(function(res) {
+    return $http.post(API_URL + '/auth/register', user).then(function(res) {
       currentUser = res.data
       TokenFactory.set(currentUser.token)
       return res.data
@@ -211,8 +213,9 @@ angular.module('hackapp').factory('AuthInterceptor', ['$q', '$rootScope', 'Token
   function request(config) {
     config.headers = config.headers || {}
     var token = TokenFactory.get()
-    if (token)
+    if (token) {
       config.headers.Authorization = 'Bearer ' + token
+    }
     return config
   }
 
@@ -259,8 +262,11 @@ angular.module('hackapp').factory('TokenFactory', ['$window', function TokenFact
   }
 
   function setToken(token) {
-    if (token) store.setItem(key, token)
-    else store.removeItem(key)
+    if (token) {
+      store.setItem(key, token)
+    } else {
+      store.removeItem(key)
+    }
   }
 
   return {
