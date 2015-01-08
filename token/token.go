@@ -32,11 +32,11 @@ func init() {
 // Validation ...
 func Validation(c *web.C, h http.Handler) http.Handler {
 	fn := func(rw http.ResponseWriter, req *http.Request) {
-		token, _ := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
 			return verifyKey, nil
 		})
-		if !token.Valid {
-			msg := "invalid access_token"
+		if !token.Valid || err != nil {
+			msg := "error validating access_token"
 			http.Error(rw, msg, http.StatusUnauthorized)
 			return
 		}

@@ -11,8 +11,6 @@ const (
 	defaultName    = "hackdb"
 )
 
-var addr string
-
 // DataStore holds the connection with the database.
 type DataStore struct {
 	*mgo.Session
@@ -21,12 +19,13 @@ type DataStore struct {
 
 // Conn ...
 func Conn() (*DataStore, error) {
-	sess, err := connection()
+	sess, err := conn()
 	ds := DataStore{sess, defaultName}
 	return &ds, err
 }
 
-func connection() (*mgo.Session, error) {
+func conn() (*mgo.Session, error) {
+	var addr string
 	if addr = os.Getenv("MONGODB_PORT_27017_TCP_ADDR"); addr == "" {
 		addr = defaultAddress
 	}

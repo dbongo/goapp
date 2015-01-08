@@ -8,18 +8,18 @@ import (
 	"github.com/dbongo/hackapp/token"
 )
 
-type loginUser struct {
+type credentials struct {
 	Email    string
 	Password string
 }
 
-type registerUser struct {
+type registration struct {
 	Email    string
 	Username string
 	Password string
 }
 
-type response struct {
+type profile struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Token    string `json:"token"`
@@ -27,13 +27,13 @@ type response struct {
 
 // Login ...
 func Login(w http.ResponseWriter, req *http.Request) {
-	lu := loginUser{}
+	login := credentials{}
 	defer req.Body.Close()
-	if err := json.NewDecoder(req.Body).Decode(&lu); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&login); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := model.AuthUser(lu.Email, lu.Password)
+	user, err := model.AuthUser(login.Email, login.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -43,21 +43,24 @@ func Login(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	res := response{user.Email, user.Username, t.Raw}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&res)
+	json.NewEncoder(w).Encode(&profile{
+		Email:    user.Email,
+		Username: user.Username,
+		Token:    t.Raw,
+	})
 }
 
 // Register ...
 func Register(w http.ResponseWriter, req *http.Request) {
-	ru := registerUser{}
+	register := registration{}
 	defer req.Body.Close()
-	if err := json.NewDecoder(req.Body).Decode(&ru); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&register); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := model.NewUser(ru.Email, ru.Username, ru.Password)
+	user, err := model.NewUser(register.Email, register.Username, register.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -67,8 +70,11 @@ func Register(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	res := response{user.Email, user.Username, t.Raw}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(&res)
+	json.NewEncoder(w).Encode(&profile{
+		Email:    user.Email,
+		Username: user.Username,
+		Token:    t.Raw,
+	})
 }

@@ -54,7 +54,7 @@ angular.module('hackapp').config(['$httpProvider', '$stateProvider', '$urlRouter
     })
 }])
 
-angular.module('hackapp').constant('API_URL', 'http://localhost:3000/api')
+angular.module('hackapp').constant('API_URL', 'http://localhost:8080')
 
 angular.module('hackapp').controller('AppCtrl', ['Auth', function AppCtrl(Auth) {
     var vm = this
