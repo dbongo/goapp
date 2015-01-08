@@ -1,23 +1,22 @@
 angular.module('hackapp').controller('PostsCtrl', function PostsCtrl(Posts, Auth) {
-  var vm = this
+    var vm = this
+    vm.posts = []
 
-  vm.posts = []
-  vm.addPost = addPost
+    Posts.fetch().then(function(posts) {
+        vm.posts = posts
+    })
 
-  Posts.fetch().then(function(posts) {
-    vm.posts = posts
-  })
-
-  function addPost() {
-    if (vm.postBody) {
-      Posts.create({
-        username: Auth.getCurrentUser().username,
-        body: vm.postBody
-      })
-      .then(function(res) {
-        vm.postBody = null
-        vm.posts.push(res.data)
-      })
+    function addPost() {
+        if (vm.postBody) {
+            Posts.create({
+                username: Auth.getCurrentUser().username,
+                body: vm.postBody
+            })
+            .then(function(res) {
+                vm.postBody = null
+                vm.posts.push(res.data)
+            })
+        }
     }
-  }
+    vm.addPost = addPost
 })
