@@ -157,7 +157,8 @@ angular.module('app').service('Auth', ['$http', 'TokenFactory', 'API_URL', funct
 	var currentUser = {}
 
 	function login(user) {
-		return $http.post(API_URL + '/auth/login', user).then(function(res) {
+		return $http.post(API_URL + '/auth/login', user)
+		.then(function(res) {
 			currentUser = res.data
 			TokenFactory.set(currentUser.token)
 			return res.data
@@ -165,7 +166,8 @@ angular.module('app').service('Auth', ['$http', 'TokenFactory', 'API_URL', funct
 	}
 
 	function register(user) {
-		return $http.post(API_URL + '/auth/register', user).then(function(res) {
+		return $http.post(API_URL + '/auth/register', user)
+		.then(function(res) {
 			currentUser = res.data
 			TokenFactory.set(currentUser.token)
 			return res.data
@@ -242,11 +244,8 @@ angular.module('app').factory('TokenFactory', ['$window', function TokenFactory(
 	}
 
 	function setToken(token) {
-		if (token) {
-            store.setItem(key, token)
-        } else {
-            store.removeItem(key)
-        }
+		if (token) store.setItem(key, token)
+		else store.removeItem(key)
 	}
 
 	return {
@@ -254,14 +253,3 @@ angular.module('app').factory('TokenFactory', ['$window', function TokenFactory(
 		set: setToken
 	}
 }])
-
-// angular.module('app').factory('User', function User($resource, API_URL) {
-//     return $resource(API_URL + '/api/users/:id/:controller', {id: '@_id'}, {
-// 		get: {
-// 			method: 'GET',
-// 			params: {
-// 				id: 'me'
-// 			}
-// 		}
-// 	})
-// })

@@ -2,7 +2,8 @@ angular.module('app').service('Auth', function Auth($http, TokenFactory, API_URL
 	var currentUser = {}
 
 	function login(user) {
-		return $http.post(API_URL + '/auth/login', user).then(function(res) {
+		return $http.post(API_URL + '/auth/login', user)
+		.then(function(res) {
 			currentUser = res.data
 			TokenFactory.set(currentUser.token)
 			return res.data
@@ -10,7 +11,8 @@ angular.module('app').service('Auth', function Auth($http, TokenFactory, API_URL
 	}
 
 	function register(user) {
-		return $http.post(API_URL + '/auth/register', user).then(function(res) {
+		return $http.post(API_URL + '/auth/register', user)
+		.then(function(res) {
 			currentUser = res.data
 			TokenFactory.set(currentUser.token)
 			return res.data

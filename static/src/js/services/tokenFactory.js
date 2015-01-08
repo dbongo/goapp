@@ -7,11 +7,8 @@ angular.module('app').factory('TokenFactory', function TokenFactory($window) {
 	}
 
 	function setToken(token) {
-		if (token) {
-            store.setItem(key, token)
-        } else {
-            store.removeItem(key)
-        }
+		if (token) store.setItem(key, token)
+		else store.removeItem(key)
 	}
 
 	return {
