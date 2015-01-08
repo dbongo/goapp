@@ -1,3 +1,3 @@
 'use strict';
 
-angular.module('app', ['ngResource', 'ui.router', 'ui.bootstrap'])
+angular.module('hackapp', ['ngResource', 'ui.router', 'ui.bootstrap'])
