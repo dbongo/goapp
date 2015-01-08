@@ -18,8 +18,8 @@ type User struct {
 	Email     string    `bson:"email" json:"email,omitempty"`
 	Username  string    `bson:"username" json:"username,omitempty"`
 	Password  string    `bson:"password" json:"-"`
-	Created   time.Time `bson:"created" json:"created"`
-	LastLogin time.Time `bson:"lastlogin" json:"lastlogin"`
+	Created   time.Time `bson:"created" json:"created,omitempty"`
+	LastLogin time.Time `bson:"lastlogin" json:"lastlogin,omitempty"`
 }
 
 // NewUser ...
@@ -66,13 +66,13 @@ func UserExists(email string) bool {
 
 // FindUserByEmail ...
 func FindUserByEmail(email string) (*User, error) {
-	conn, err := db.Connect()
+	ds, err := db.Conn()
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer ds.Close()
 	user := &User{}
-	if err := conn.Users().Find(bson.M{"email": email}).One(user); err == mgo.ErrNotFound {
+	if err := ds.Users().Find(bson.M{"email": email}).One(user); err == mgo.ErrNotFound {
 		return nil, mgo.ErrNotFound
 	} else if err != nil {
 		return nil, err
@@ -82,33 +82,33 @@ func FindUserByEmail(email string) (*User, error) {
 
 // Save ...
 func (u *User) Save() error {
-	conn, err := db.Connect()
+	ds, err := db.Conn()
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer ds.Close()
 	u.Created = time.Now()
-	return conn.Users().Insert(u)
+	return ds.Users().Insert(u)
 }
 
 // Delete ...
 func (u *User) Delete() error {
-	conn, err := db.Connect()
+	ds, err := db.Conn()
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
-	return conn.Users().Remove(bson.M{"email": u.Email})
+	defer ds.Close()
+	return ds.Users().Remove(bson.M{"email": u.Email})
 }
 
 // Update ...
 func (u *User) Update() error {
-	conn, err := db.Connect()
+	ds, err := db.Conn()
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
-	return conn.Users().Update(bson.M{"email": u.Email}, u)
+	defer ds.Close()
+	return ds.Users().Update(bson.M{"email": u.Email}, u)
 }
 
 func (u *User) hashPassword(password string) {

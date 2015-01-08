@@ -1,4 +1,4 @@
-function match() {
+angular.module('app').directive('match', function match() {
 	return {
 		require: 'ngModel',
 		restrict: 'A',
@@ -13,7 +13,4 @@ function match() {
 			})
 		}
 	}
-}
-
-angular.module('app')
-.directive('match', match)
+})

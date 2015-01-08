@@ -1,21 +1,21 @@
-function LoginCtrl($state, Auth) {
+angular.module('app').controller('LoginCtrl', function LoginCtrl($state, Auth) {
 	var vm = this
 
 	vm.alerts = []
-	vm.user = {email: "", password: ""}
+	vm.user = {}
 	vm.login = login
 	vm.closeAlert = closeAlert
 
 	function login(form) {
 		if (form.$valid) {
-			Auth.login(vm.user).then(function() {
+			Auth.login({email: vm.user.email, password: vm.user.password})
+			.then(function() {
 				vm.alerts = []
 				$state.go('posts')
-			}).catch(function(err) {
-				vm.alerts.push({
-					type: "danger",
-					msg: err.message
-				})
+			})
+			.catch(function(err) {
+				vm.alerts.push({type: "danger", msg: err.message})
+				Auth.logout()
 			})
 		}
 	}
@@ -23,7 +23,4 @@ function LoginCtrl($state, Auth) {
 	function closeAlert(index) {
 		vm.alerts.splice(index, 1)
 	}
-}
-
-angular.module('app')
-.controller('LoginCtrl', LoginCtrl)
+})

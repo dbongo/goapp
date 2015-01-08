@@ -1,41 +1,19 @@
-function Auth($http, TokenFactory, API_URL) {
+angular.module('app').service('Auth', function Auth($http, TokenFactory, API_URL) {
 	var currentUser = {}
 
-	var service = {
-		login: login,
-		register: register,
-		logout: logout,
-		getCurrentUser: getCurrentUser
-	}
-	return service
-
-	function login(u) {
-		$http.post(API_URL + '/login', {
-			email: u.email,
-			password: u.password
-		}).success(function(data) {
-			currentUser = data
-			TokenFactory.set(data.token)
-			return currentUser
-		}).error(function(err) {
-			this.logout()
-			return err
+	function login(user) {
+		return $http.post(API_URL + '/auth/login', user).then(function(res) {
+			currentUser = res.data
+			TokenFactory.set(currentUser.token)
+			return res.data
 		})
-
 	}
 
-	function register(u) {
-		$http.post(API_URL + '/register', {
-			email: u.email,
-			username: u.username,
-			password: u.password
-		}).success(function(data) {
-			currentUser = data
-			TokenFactory.set(data.token)
-			return currentUser
-		}).error(function(err) {
-			this.logout()
-			return err
+	function register(user) {
+		return $http.post(API_URL + '/auth/register', user).then(function(res) {
+			currentUser = res.data
+			TokenFactory.set(currentUser.token)
+			return res.data
 		})
 	}
 
@@ -47,7 +25,12 @@ function Auth($http, TokenFactory, API_URL) {
 	function getCurrentUser() {
 		return currentUser
 	}
-}
 
-angular.module('app')
-.service('Auth', Auth)
+	var service = {
+		login: login,
+		register: register,
+		logout: logout,
+		getCurrentUser: getCurrentUser
+	}
+	return service
+})

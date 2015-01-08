@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// Config is a struct for specifying configuration parameters for the
-// Logger middleware.
+// Config is a struct for specifying configuration parameters for the Logger
+// middleware.
 type Config struct {
 	Prefix               string
 	DisableAutoBrackets  bool
@@ -19,53 +19,12 @@ type Config struct {
 type Logger struct {
 	http.Handler
 
-	ch   chan *record
+	ch   chan *Record
 	conf Config
 }
 
-// HTTPLogger ...
-func HTTPLogger(h http.Handler) http.Handler {
-	l := newHTTPLogger(h)
-	fn := func(rw http.ResponseWriter, req *http.Request) {
-		l.ServeHTTP(rw, req)
-	}
-	return http.HandlerFunc(fn)
-}
-
-func (l *Logger) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	addr := req.RemoteAddr
-	for _, headerKey := range l.conf.RemoteAddressHeaders {
-		if val := req.Header.Get(headerKey); len(val) > 0 {
-			addr = val
-			break
-		}
-	}
-	r := &record{
-		ResponseWriter: rw,
-		start:          time.Now().UTC(),
-		ip:             addr,
-		method:         req.Method,
-		rawpath:        req.RequestURI,
-		responseStatus: http.StatusOK,
-		proto:          req.Proto,
-		userAgent:      req.UserAgent(),
-	}
-	l.Handler.ServeHTTP(r, req)
-	l.ch <- r
-}
-
-func (r *record) Write(b []byte) (int, error) {
-	written, err := r.ResponseWriter.Write(b)
-	r.responseBytes += int64(written)
-	return written, err
-}
-
-func (r *record) WriteHeader(status int) {
-	r.responseStatus = status
-	r.ResponseWriter.WriteHeader(status)
-}
-
-type record struct {
+// Record ...
+type Record struct {
 	http.ResponseWriter
 
 	start               time.Time
@@ -75,47 +34,92 @@ type record struct {
 	proto, userAgent    string
 }
 
-func newHTTPLogger(h http.Handler) http.Handler {
-	c := Config{"hackapp", false, []string{"X-Forwarded-Proto"}}
-	l := &Logger{
-		Handler: h,
-		ch:      make(chan *record, 1000),
-		conf:    c,
+// LogHTTP ...
+func LogHTTP(h http.Handler) http.Handler {
+	l := logHTTP(h)
+	fn := func(rw http.ResponseWriter, req *http.Request) {
+		l.ServeHTTP(rw, req)
 	}
-	go l.logResponse()
-	return l
+	return http.HandlerFunc(fn)
+}
+
+func (log *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	addr := req.RemoteAddr
+	for _, headerKey := range log.conf.RemoteAddressHeaders {
+		if val := req.Header.Get(headerKey); len(val) > 0 {
+			addr = val
+			break
+		}
+	}
+	record := &Record{
+		ResponseWriter: w,
+
+		start:          time.Now().UTC(),
+		ip:             addr,
+		method:         req.Method,
+		rawpath:        req.RequestURI,
+		responseStatus: http.StatusOK,
+		proto:          req.Proto,
+		userAgent:      req.UserAgent(),
+	}
+	log.Handler.ServeHTTP(record, req)
+	log.ch <- record
+}
+
+func (r *Record) Write(b []byte) (int, error) {
+	written, err := r.ResponseWriter.Write(b)
+	r.responseBytes += int64(written)
+	return written, err
+}
+
+// WriteHeader ...
+func (r *Record) WriteHeader(status int) {
+	r.responseStatus = status
+	r.ResponseWriter.WriteHeader(status)
+}
+
+func logHTTP(h http.Handler) http.Handler {
+	config := Config{"hackapp", false, []string{"X-Forwarded-Proto"}}
+	log := &Logger{
+		Handler: h,
+
+		ch:   make(chan *Record, 1000),
+		conf: config,
+	}
+	go log.response()
+	return log
 }
 
 // [hackapp] 2014/12/30 20:41:41 [::1]:62629 GET /api/hello 200 13b 437.126µs HTTP/1.1 curl/7.37.1
 // [hackapp] 2014/12/30 20:47:04 [::1]:62930 POST /login 200 490b 224.032597ms HTTP/1.1 curl/7.37.1
-func (l *Logger) logResponse() {
+func (log *Logger) response() {
 	for {
-		lr := <-l.ch
+		res := <-log.ch
 		timeStamp := fmt.Sprintf(
 			"%04d/%02d/%02d %02d:%02d:%02d",
-			lr.start.Year(),
-			lr.start.Month(),
-			lr.start.Day(),
-			lr.start.Hour(),
-			lr.start.Minute(),
-			lr.start.Second(),
+			res.start.Year(),
+			res.start.Month(),
+			res.start.Day(),
+			res.start.Hour(),
+			res.start.Minute(),
+			res.start.Second(),
 		)
-		prefix := l.conf.Prefix
-		if len(prefix) > 0 && l.conf.DisableAutoBrackets == false {
+		prefix := log.conf.Prefix
+		if len(prefix) > 0 && log.conf.DisableAutoBrackets == false {
 			prefix = "[" + prefix + "]"
 		}
 		logRecord := fmt.Sprintf(
-			"%s %s %s %s %s %d %db %v %s %s\n",
+			"%s %s %s %s %s %d %dbytes %v %s %s\n",
 			prefix,
 			timeStamp,
-			lr.ip,
-			lr.method,
-			lr.rawpath,
-			lr.responseStatus,
-			lr.responseBytes,
-			time.Since(lr.start),
-			lr.proto,
-			lr.userAgent,
+			res.ip,
+			res.method,
+			res.rawpath,
+			res.responseStatus,
+			res.responseBytes,
+			time.Since(res.start),
+			res.proto,
+			res.userAgent,
 		)
 		os.Stdout.WriteString(logRecord)
 	}

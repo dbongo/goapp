@@ -22,7 +22,7 @@ func (s *S) SetUpSuite(c *gocheck.C) {
 }
 
 func (s *S) TearDownSuite(c *gocheck.C) {
-	strg, err := db.Connect()
+	strg, err := db.Conn()
 	c.Assert(err, gocheck.IsNil)
 	defer strg.Close()
 }
@@ -50,19 +50,19 @@ func (s *S) TestCreateUserWithoutRequiredFields(c *gocheck.C) {
 	c.Assert(err.Error(), gocheck.Equals, "email / username / password fields can not be blank")
 }
 
-func (s *S) TestValid(c *gocheck.C) {
-	user := User{Name: "Alice", Email: "alice@example.org", Username: "alice", Password: "123456"}
-	defer user.Delete()
-	user.Save()
-	valid := user.Valid()
-	c.Assert(valid, gocheck.Equals, true)
-}
-
-func (s *S) TestValidWhenUserDoesNotExistInTheDB(c *gocheck.C) {
-	user := User{Name: "Alice", Email: "alice@example.org", Username: "alice", Password: "123456"}
-	valid := user.Valid()
-	c.Assert(valid, gocheck.Equals, false)
-}
+// func (s *S) TestValid(c *gocheck.C) {
+// 	user := User{Name: "Alice", Email: "alice@example.org", Username: "alice", Password: "123456"}
+// 	defer user.Delete()
+// 	user.Save()
+// 	valid := user.Valid()
+// 	c.Assert(valid, gocheck.Equals, true)
+// }
+//
+// func (s *S) TestValidWhenUserDoesNotExistInTheDB(c *gocheck.C) {
+// 	user := User{Name: "Alice", Email: "alice@example.org", Username: "alice", Password: "123456"}
+// 	valid := user.Valid()
+// 	c.Assert(valid, gocheck.Equals, false)
+// }
 
 func (s *S) TestFindUserByEmail(c *gocheck.C) {
 	user := User{Name: "Alice", Email: "alice@example.org", Username: "alice", Password: "123456"}

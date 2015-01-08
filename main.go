@@ -2,43 +2,46 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"time"
 
-	"github.com/dbongo/hackapp/logger"
+	"github.com/zenazn/goji/web/middleware"
+
+	mw "github.com/dbongo/hackapp/middleware"
 	"github.com/dbongo/hackapp/router"
-	"github.com/zenazn/goji/web"
+	"github.com/dbongo/hackapp/static"
 )
 
 var (
-	port int
-	mux  *web.Mux
+	//endpoint = flag.String("endp", "/var/run/docker.sock", "Docker endpoint")
+	endpoint   = flag.String("endp", "/Users/dbongo/.boot2docker/boot2docker-vm.sock", "boot2docker endpoint")
+	apiport    = flag.String("apip", ":3000", "Port to serve hackapp api")
+	uiport     = flag.String("uip", ":8080", "Port to serve hackapp ui")
+	assetspath = flag.String("assetsp", "./static/dist", "Path to the assets")
 )
-
-func init() {
-	flag.IntVar(&port, "p", 3000, "port")
-
-	mux = router.Init()
-}
 
 func main() {
 	flag.Parse()
 
-	// Runtime profiling data. To view all available profiles, open http://localhost:6060/debug/pprof/ in the browser
+	// Runtime profiling data. To view all available profiles, open
+	// http://localhost:6060/debug/pprof/ in the browser
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", port),
-		Handler:        mux,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+	api := router.New()
+	api.Use(middleware.RequestID)
+	api.Use(mw.Options)
+	api.Use(mw.SetHeaders)
+	api.Use(mw.LogHTTP)
+	api.Use(mw.Recovery)
+	go func() {
+		log.Fatal(http.ListenAndServe(*apiport, api))
+	}()
+
+	ui := static.Handler(*assetspath, *endpoint)
+	if err := http.ListenAndServe(*uiport, ui); err != nil {
+		log.Fatal(err)
 	}
-	logger.Info.Printf("hackapp listening on %s", s.Addr)
-	log.Fatal(s.ListenAndServe())
 }

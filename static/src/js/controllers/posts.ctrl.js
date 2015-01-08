@@ -1,4 +1,4 @@
-function PostsCtrl(Posts, Auth) {
+angular.module('app').controller('PostsCtrl', function PostsCtrl(Posts, Auth) {
 	var vm = this
 
 	vm.posts = []
@@ -10,16 +10,11 @@ function PostsCtrl(Posts, Auth) {
 
 	function addPost() {
 		if (vm.postBody) {
-			Posts.create({
-				username: Auth.getCurrentUser().username,
-				body: vm.postBody
-			}).then(function(res) {
+			Posts.create({username: Auth.getCurrentUser().username, body: vm.postBody})
+			.then(function(res) {
 				vm.postBody = null
 				vm.posts.push(res.data)
 			})
 		}
 	}
-}
-
-angular.module('app')
-.controller('PostsCtrl', PostsCtrl)
+})

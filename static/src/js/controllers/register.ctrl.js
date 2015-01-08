@@ -1,24 +1,21 @@
-function RegisterCtrl($state, Auth) {
+angular.module('app').controller('RegisterCtrl', function RegisterCtrl($state, Auth) {
 	var vm = this
 
 	vm.alerts = []
-	vm.user = {username: "", password: "", password2: ""}
+	vm.user = {}
 	vm.register = register
 	vm.closeAlert = closeAlert
 
 	function register(form) {
 		if (form.$valid) {
-			Auth.createUser({
-				username: vm.user.username,
-				password: vm.user.password2
-			}).then(function() {
+			Auth.register({email: vm.user.email, username: vm.user.username, password: vm.user.password2})
+			.then(function() {
 				vm.alerts = []
 				$state.go('posts')
-			}).catch(function() {
-				vm.alerts.push({
-					type: "danger",
-					msg: "The specified username is already in use"
-				})
+			})
+			.catch(function(err) {
+				vm.alerts.push({type: "danger", msg: err.message})
+				Auth.logout()
 			})
 		}
 	}
@@ -26,7 +23,4 @@ function RegisterCtrl($state, Auth) {
 	function closeAlert(index) {
 		vm.alerts.splice(index, 1)
 	}
-}
-
-angular.module('app')
-.controller('RegisterCtrl', RegisterCtrl)
+})

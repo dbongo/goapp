@@ -1,6 +1,7 @@
-angular.module('app')
-.config(function($httpProvider, $stateProvider, $urlRouterProvider, $locationProvider) {
+angular.module('app').config(function($httpProvider, $stateProvider, $urlRouterProvider, $locationProvider) {
+
     $urlRouterProvider.otherwise('/')
+
     $stateProvider
     .state('home', {
         url: '/',
@@ -25,19 +26,22 @@ angular.module('app')
         controllerAs: 'vm',
         authenticate: true
     })
+
     $locationProvider.html5Mode(true)
+
     $httpProvider.interceptors.push('AuthInterceptor')
-})
-.run(function($rootScope, $location, $state, $window, Auth) {
+
+}).run(function($rootScope, $location, $state, $window, Auth) {
+
     $rootScope.$on('$stateChangeStart', function(event, next) {
-        if (next.authenticate) {
-            $state.go('login')
-        }
+        if (next.authenticate) $state.go('login')
     })
+
     $rootScope.$on('Auth:Required', function() {
         Auth.logout()
         $state.go('login')
     })
+
     $rootScope.$on('Auth:Forbidden', function() {
         Auth.logout()
         $state.go('login')

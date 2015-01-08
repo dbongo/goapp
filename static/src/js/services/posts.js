@@ -1,9 +1,4 @@
-function Posts($http, API_URL) {
-	var service = {
-		fetch: fetch,
-		create: create
-	}
-	return service
+angular.module('app').service('Posts', function Posts($http, API_URL) {
 
 	function fetch() {
 		return $http.get(API_URL + '/api/posts').then(function(res) {
@@ -14,8 +9,10 @@ function Posts($http, API_URL) {
 	function create(post) {
 		return $http.post(API_URL + '/api/posts', post)
 	}
-}
 
-
-angular.module('app')
-.service('Posts', Posts)
+	var service = {
+		fetch: fetch,
+		create: create
+	}
+	return service
+})

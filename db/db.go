@@ -3,47 +3,59 @@ package db
 import (
 	"os"
 
-	"github.com/dbongo/hackapp/db/storage"
 	"gopkg.in/mgo.v2"
 )
 
 const (
 	defaultAddress = "127.0.0.1:27017"
-	dbName         = "hackdb"
+	defaultName    = "hackdb"
 )
 
-var (
-	strg Storage
-	addr string
-	err  error
-)
+var addr string
 
-// Storage ...
-type Storage struct {
-	*storage.Storage
+// DataStore holds the connection with the database.
+type DataStore struct {
+	*mgo.Session
+	name string
 }
 
-func connect() (*storage.Storage, error) {
+// Conn ...
+func Conn() (*DataStore, error) {
+	sess, err := connection()
+	ds := DataStore{sess, defaultName}
+	return &ds, err
+}
+
+func connection() (*mgo.Session, error) {
 	if addr = os.Getenv("MONGODB_PORT_27017_TCP_ADDR"); addr == "" {
 		addr = defaultAddress
 	}
-	return storage.MongoDB(addr, dbName)
+	sess, err := mgo.Dial(addr)
+	if err != nil {
+		return nil, err
+	}
+	clone := sess.Clone()
+	return clone, nil
 }
 
-// Connect ...
-func Connect() (*Storage, error) {
-	strg.Storage, err = connect()
-	return &strg, err
+// DB returns the named database specified in the DDataStore.
+func (ds *DataStore) DB() *mgo.Database {
+	return ds.Session.DB(ds.name)
 }
 
-// Users returns the users collection from mongo.
-func (s *Storage) Users() *storage.Collection {
-	emailIndex := mgo.Index{
+// Close closes the session, releasing the connection.
+func (ds *DataStore) Close() {
+	ds.Session.Close()
+}
+
+// Users returns the users collection from the database.
+func (ds *DataStore) Users() *mgo.Collection {
+	email := mgo.Index{
 		Key:        []string{"email"},
 		Unique:     true,
 		Background: true,
 	}
-	c := s.Collection("users")
-	c.EnsureIndex(emailIndex)
-	return c
+	users := ds.Session.DB(ds.name).C("users")
+	users.EnsureIndex(email)
+	return users
 }
