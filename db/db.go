@@ -37,7 +37,7 @@ func conn() (*mgo.Session, error) {
 	return clone, nil
 }
 
-// DB returns the named database specified in the DDataStore.
+// DB returns the named database specified in the DataStore.
 func (ds *DataStore) DB() *mgo.Database {
 	return ds.Session.DB(ds.name)
 }

@@ -10,14 +10,14 @@ import (
 // New returns our api router
 func New() *web.Mux {
 	mux := web.New()
-	mux.Post("/auth/login", handler.Login)
-	mux.Post("/auth/register", handler.Register)
+	mux.Post("/api/login", handler.Login)
+	mux.Post("/api/register", handler.Register)
 
-	api := web.New()
-	api.Use(token.Validation)
-	api.Get("/api/hello", handler.HelloWorld)
-	api.Get("/api/hello/:name", handler.HelloName)
-
-	mux.Handle("/api/*", api)
+	hello := web.New()
+	hello.Use(token.Validation)
+	hello.Get("/api/hello", handler.HelloWorld)
+	hello.Get("/api/hello/:name", handler.HelloName)
+	mux.Handle("/api/hello", hello)
+	mux.Handle("/api/hello/*", hello)
 	return mux
 }
