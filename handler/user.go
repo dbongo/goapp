@@ -8,32 +8,35 @@ import (
 	"github.com/dbongo/hackapp/token"
 )
 
-type credentials struct {
+// Login ...
+type Login struct {
 	Email    string
 	Password string
 }
 
-type registration struct {
+// Register ...
+type Register struct {
 	Email    string
 	Username string
 	Password string
 }
 
-type profile struct {
+// Session ...
+type Session struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Token    string `json:"token"`
 }
 
-// Login ...
-func Login(w http.ResponseWriter, req *http.Request) {
-	login := credentials{}
+// LoginUser ...
+func LoginUser(w http.ResponseWriter, req *http.Request) {
+	l := Login{}
 	defer req.Body.Close()
-	if err := json.NewDecoder(req.Body).Decode(&login); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&l); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := model.AuthUser(login.Email, login.Password)
+	user, err := model.AuthUser(l.Email, l.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -45,22 +48,22 @@ func Login(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&profile{
+	json.NewEncoder(w).Encode(&Session{
 		Email:    user.Email,
 		Username: user.Username,
 		Token:    t.Raw,
 	})
 }
 
-// Register ...
-func Register(w http.ResponseWriter, req *http.Request) {
-	register := registration{}
+// RegisterUser ...
+func RegisterUser(w http.ResponseWriter, req *http.Request) {
+	r := Register{}
 	defer req.Body.Close()
-	if err := json.NewDecoder(req.Body).Decode(&register); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := model.NewUser(register.Email, register.Username, register.Password)
+	user, err := model.NewUser(r.Email, r.Username, r.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -72,7 +75,7 @@ func Register(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(&profile{
+	json.NewEncoder(w).Encode(&Session{
 		Email:    user.Email,
 		Username: user.Username,
 		Token:    t.Raw,
