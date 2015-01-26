@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/dbongo/hackapp/handler"
-	"github.com/dbongo/hackapp/token"
+	"github.com/dbongo/hackapp/session"
 
 	"github.com/zenazn/goji/web"
 )
@@ -16,9 +16,14 @@ func New() *web.Mux {
 	hello := web.New()
 	mux.Handle("/api/hello", hello)
 	mux.Handle("/api/hello/*", hello)
-	hello.Use(token.Validation)
+	hello.Use(session.Validation)
 	hello.Get("/api/hello", handler.HelloWorld)
 	hello.Get("/api/hello/:name", handler.HelloName)
+
+	user := web.New()
+	mux.Handle("/api/user", user)
+	user.Use(session.Validation)
+	user.Put("/api/user", handler.UpdateUser)
 
 	return mux
 }

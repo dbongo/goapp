@@ -12,7 +12,7 @@ import (
 	"github.com/dbongo/hackapp/db"
 )
 
-var fails []Fail
+//var fails []Fail
 
 type (
 	// Fail ...
@@ -20,16 +20,17 @@ type (
 		Timestamp time.Time `bson:"authfail" json:"authfail,omitempty"`
 		Message   string    `bson:"message" json:"message,omitempty"`
 	}
-
 	// User ...
 	User struct {
-		Name         string    `bson:"name" json:"name,omitempty"`
-		Email        string    `bson:"email" json:"email,omitempty"`
-		Username     string    `bson:"username" json:"username,omitempty"`
-		Password     string    `bson:"password" json:"-"`
-		Created      time.Time `bson:"created" json:"created,omitempty"`
-		LastLogin    time.Time `bson:"lastlogin" json:"lastlogin,omitempty"`
-		FailedLogins []Fail    `bson:"fails" json:"fails"`
+		Name      string    `bson:"name" json:"name,omitempty"`
+		Email     string    `bson:"email" json:"email,omitempty"`
+		Gravatar  string    `bson:"gravatar" json:"gravatar,omitempty"`
+		Username  string    `bson:"username" json:"username,omitempty"`
+		Password  string    `bson:"password" json:"-"`
+		Created   time.Time `bson:"created" json:"created,omitempty"`
+		LastLogin time.Time `bson:"lastlogin" json:"lastlogin,omitempty"`
+		Updated   time.Time `bson:"updated" json:"updated,omitempty"`
+		Failed    []Fail    `bson:"failed" json:"failed,omitempty"`
 	}
 )
 
@@ -41,7 +42,7 @@ func NewUser(email, username, password string) (*User, error) {
 		return nil, errors.New("please provide another email, " + email + " is taken")
 	}
 	u := User{}
-	u.Email = email
+	u.SetEmail(email)
 	u.Username = username
 	u.hashPassword(password)
 	u.Created = time.Now()
@@ -53,32 +54,14 @@ func NewUser(email, username, password string) (*User, error) {
 
 // AuthUser ...
 func AuthUser(email, password string) (*User, error) {
-	//fail := Fail{}
 	u, err := FindUserByEmail(email)
 	if err != nil {
-		// log.Println()
-		// log.Printf("string error: %v", err)
-		// fail.Timestamp = time.Now()
-		// fail.Message = err.Error()
-		// log.Printf("struct fail: %v", fail)
-		// fails = append(fails, &fail)
-		// log.Printf("var fails: %v", fails)
-		// log.Println()
 		return nil, err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
-		// log.Println()
-		// log.Printf("string error: %v", err)
-		// fail.Timestamp = time.Now()
-		// fail.Message = err.Error()
-		// log.Printf("struct fail: %v", fail)
-		// fails = append(fails, &fail)
-		// log.Printf("var fails: %v", fails)
-		// log.Println()
 		return nil, err
 	}
 	u.LastLogin = time.Now()
-	//u.LoginFails = &fails
 	if err := u.Update(); err != nil {
 		return nil, err
 	}
@@ -110,6 +93,12 @@ func FindUserByEmail(email string) (*User, error) {
 	return user, nil
 }
 
+// SetEmail ...
+func (u *User) SetEmail(email string) {
+	u.Email = email
+	u.Gravatar = CreateGravatar(email)
+}
+
 // Save ...
 func (u *User) Save() error {
 	ds, err := db.Conn()
@@ -117,7 +106,6 @@ func (u *User) Save() error {
 		return err
 	}
 	defer ds.Close()
-	u.Created = time.Now()
 	return ds.Users().Insert(u)
 }
 
@@ -138,6 +126,21 @@ func (u *User) Update() error {
 		return err
 	}
 	defer ds.Close()
+	// change := mgo.Change{
+	// 	ReturnNew: true,
+	// 	Update: bson.M{
+	// 		"$set": bson.M{
+	// 			"name":     up.Name,
+	// 			"email":    up.Email,
+	// 			"username": up.Username,
+	// 			"updated":  time.Now(),
+	// 		}}}
+	// _, err = ds.Users().Find(bson.M{"email": u.Email}).Apply(change, up)
+	// if err != nil {
+	// 	return err
+	// }
+	// return nil
+	u.Updated = time.Now()
 	return ds.Users().Update(bson.M{"email": u.Email}, u)
 }
 

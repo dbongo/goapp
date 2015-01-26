@@ -1,6 +1,7 @@
-package token
+package session
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/dbongo/hackapp/model"
 	"github.com/dbongo/hackapp/testkeys"
+	"golang.org/x/net/context"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/zenazn/goji/web"
@@ -32,7 +34,7 @@ func init() {
 // Validation ...
 func Validation(c *web.C, h http.Handler) http.Handler {
 	fn := func(rw http.ResponseWriter, req *http.Request) {
-		_, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
 			return verifyKey, nil
 		})
 		if err != nil {
@@ -40,6 +42,7 @@ func Validation(c *web.C, h http.Handler) http.Handler {
 			http.Error(rw, msg, http.StatusUnauthorized)
 			return
 		}
+		c.Env["access_token"] = token.Raw
 		h.ServeHTTP(rw, req)
 	}
 	return http.HandlerFunc(fn)
@@ -60,6 +63,35 @@ func New(email string) (*jwt.Token, error) {
 
 // UserFromToken ...
 func UserFromToken(token string) *model.User {
+	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	})
+	if err != nil || !t.Valid {
+		return nil
+	}
+	email, ok := t.Claims["email"].(string)
+	if !ok {
+		return nil
+	}
+	user, _ := model.FindUserByEmail(email)
+	return user
+}
+
+// GetUser ...
+func GetUser(c context.Context, r *http.Request) *model.User {
+	if r.Header.Get("Authorization") != "" {
+		return getUserBearer(c, r)
+	}
+	return nil
+}
+
+func getUserBearer(c context.Context, r *http.Request) *model.User {
+	var token = r.Header.Get("Authorization")
+	fmt.Sscanf(token, "Bearer %s", &token)
+	return getUserJWT(c, token)
+}
+
+func getUserJWT(c context.Context, token string) *model.User {
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})

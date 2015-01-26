@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/goji/context"
 	"github.com/zenazn/goji/web/middleware"
 
 	mw "github.com/dbongo/hackapp/middleware"
@@ -24,6 +25,7 @@ func main() {
 	// configure api middleware
 	mux.Use(middleware.RequestID)
 	mux.Use(mw.Options)
+	mux.Use(context.Middleware)
 	mux.Use(mw.SetHeaders)
 	mux.Use(mw.HTTPLogger)
 	mux.Use(mw.Recovery)
