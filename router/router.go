@@ -14,11 +14,11 @@ func New() *web.Mux {
 	mux.Post("/api/register", handler.RegisterUser)
 
 	hello := web.New()
+	mux.Handle("/api/hello", hello)
+	mux.Handle("/api/hello/*", hello)
 	hello.Use(token.Validation)
 	hello.Get("/api/hello", handler.HelloWorld)
 	hello.Get("/api/hello/:name", handler.HelloName)
 
-	mux.Handle("/api/hello", hello)
-	mux.Handle("/api/hello/*", hello)
 	return mux
 }

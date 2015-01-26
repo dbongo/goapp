@@ -8,7 +8,7 @@ import (
 	"github.com/zenazn/goji/web/middleware"
 )
 
-// SetHeaders applies default headers to each request.
+// SetHeaders ...
 func SetHeaders(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		reqID := middleware.GetReqID(*c)

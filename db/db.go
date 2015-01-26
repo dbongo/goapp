@@ -11,7 +11,7 @@ const (
 	defaultName    = "hackdb"
 )
 
-// DataStore holds the connection with the database.
+// DataStore ...
 type DataStore struct {
 	*mgo.Session
 	name string
@@ -37,17 +37,17 @@ func conn() (*mgo.Session, error) {
 	return clone, nil
 }
 
-// DB returns the named database specified in the DataStore.
+// DB ...
 func (ds *DataStore) DB() *mgo.Database {
 	return ds.Session.DB(ds.name)
 }
 
-// Close closes the session, releasing the connection.
+// Close ...
 func (ds *DataStore) Close() {
 	ds.Session.Close()
 }
 
-// Users returns the users collection from the database.
+// Users ...
 func (ds *DataStore) Users() *mgo.Collection {
 	email := mgo.Index{
 		Key:        []string{"email"},

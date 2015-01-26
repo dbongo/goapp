@@ -9,7 +9,7 @@ import (
 	"github.com/dbongo/hackapp/model"
 	"github.com/dbongo/hackapp/testkeys"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/zenazn/goji/web"
 )
 
@@ -32,10 +32,10 @@ func init() {
 // Validation ...
 func Validation(c *web.C, h http.Handler) http.Handler {
 	fn := func(rw http.ResponseWriter, req *http.Request) {
-		token, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+		_, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
 			return verifyKey, nil
 		})
-		if !token.Valid || err != nil {
+		if err != nil {
 			msg := "error validating access_token"
 			http.Error(rw, msg, http.StatusUnauthorized)
 			return

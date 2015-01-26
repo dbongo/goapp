@@ -12,15 +12,26 @@ import (
 	"github.com/dbongo/hackapp/db"
 )
 
-// User ...
-type User struct {
-	Name      string    `bson:"name" json:"name,omitempty"`
-	Email     string    `bson:"email" json:"email,omitempty"`
-	Username  string    `bson:"username" json:"username,omitempty"`
-	Password  string    `bson:"password" json:"-"`
-	Created   time.Time `bson:"created" json:"created,omitempty"`
-	LastLogin time.Time `bson:"lastlogin" json:"lastlogin,omitempty"`
-}
+var fails []Fail
+
+type (
+	// Fail ...
+	Fail struct {
+		Timestamp time.Time `bson:"authfail" json:"authfail,omitempty"`
+		Message   string    `bson:"message" json:"message,omitempty"`
+	}
+
+	// User ...
+	User struct {
+		Name         string    `bson:"name" json:"name,omitempty"`
+		Email        string    `bson:"email" json:"email,omitempty"`
+		Username     string    `bson:"username" json:"username,omitempty"`
+		Password     string    `bson:"password" json:"-"`
+		Created      time.Time `bson:"created" json:"created,omitempty"`
+		LastLogin    time.Time `bson:"lastlogin" json:"lastlogin,omitempty"`
+		FailedLogins []Fail    `bson:"fails" json:"fails"`
+	}
+)
 
 // NewUser ...
 func NewUser(email, username, password string) (*User, error) {
@@ -33,22 +44,41 @@ func NewUser(email, username, password string) (*User, error) {
 	u.Email = email
 	u.Username = username
 	u.hashPassword(password)
+	u.Created = time.Now()
 	if err := u.Save(); err != nil {
 		return nil, err
 	}
 	return &u, nil
 }
 
-// AuthUser authenticates the user's login credentials
+// AuthUser ...
 func AuthUser(email, password string) (*User, error) {
+	//fail := Fail{}
 	u, err := FindUserByEmail(email)
 	if err != nil {
+		// log.Println()
+		// log.Printf("string error: %v", err)
+		// fail.Timestamp = time.Now()
+		// fail.Message = err.Error()
+		// log.Printf("struct fail: %v", fail)
+		// fails = append(fails, &fail)
+		// log.Printf("var fails: %v", fails)
+		// log.Println()
 		return nil, err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
+		// log.Println()
+		// log.Printf("string error: %v", err)
+		// fail.Timestamp = time.Now()
+		// fail.Message = err.Error()
+		// log.Printf("struct fail: %v", fail)
+		// fails = append(fails, &fail)
+		// log.Printf("var fails: %v", fails)
+		// log.Println()
 		return nil, err
 	}
 	u.LastLogin = time.Now()
+	//u.LoginFails = &fails
 	if err := u.Update(); err != nil {
 		return nil, err
 	}
