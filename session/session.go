@@ -34,7 +34,7 @@ func init() {
 // Validation ...
 func Validation(c *web.C, h http.Handler) http.Handler {
 	fn := func(rw http.ResponseWriter, req *http.Request) {
-		token, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+		_, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
 			return verifyKey, nil
 		})
 		if err != nil {
@@ -42,7 +42,6 @@ func Validation(c *web.C, h http.Handler) http.Handler {
 			http.Error(rw, msg, http.StatusUnauthorized)
 			return
 		}
-		c.Env["access_token"] = token.Raw
 		h.ServeHTTP(rw, req)
 	}
 	return http.HandlerFunc(fn)
@@ -79,6 +78,8 @@ func UserFromToken(token string) *model.User {
 
 // GetUser ...
 func GetUser(c context.Context, r *http.Request) *model.User {
+	log.Printf("context.Context: %v", c)
+	log.Println()
 	if r.Header.Get("Authorization") != "" {
 		return getUserBearer(c, r)
 	}
@@ -86,12 +87,16 @@ func GetUser(c context.Context, r *http.Request) *model.User {
 }
 
 func getUserBearer(c context.Context, r *http.Request) *model.User {
+	log.Printf("context.Context: %v", c)
+	log.Println()
 	var token = r.Header.Get("Authorization")
 	fmt.Sscanf(token, "Bearer %s", &token)
 	return getUserJWT(c, token)
 }
 
 func getUserJWT(c context.Context, token string) *model.User {
+	log.Printf("context.Context: %v", c)
+	log.Println()
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})

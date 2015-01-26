@@ -1,25 +1,38 @@
 package middleware
 
 import (
+	"bytes"
+	"log"
 	"net/http"
 	"runtime/debug"
 
-	"github.com/dbongo/hackapp/logger"
+	"github.com/zenazn/goji/web"
 )
 
-// Recovery is a middleware handler that recovers from panics, logs the panic
-// (and a backtrace), and returns a HTTP 500 (Internal Server Error) status if possible.
-func Recovery(h http.Handler) http.Handler {
-	fn := func(rw http.ResponseWriter, req *http.Request) {
+// Recovery is a middleware that recovers from panics, logs the panic (and a
+// backtrace), and returns HTTP 500 (Internal Server Error) status if possible.
+//
+// Recoverer prints a request ID if one is provided.
+func Recovery(c *web.C, h http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		reqID := GetReqID(*c)
 		defer func() {
 			if err := recover(); err != nil {
-				logger.Error.Printf("Recovering from error '%s'", err)
-				logger.Trace.Printf(string(debug.Stack()))
-				http.Error(rw, http.StatusText(500), 500)
-				return
+				printPanic(reqID, err)
+				debug.PrintStack()
+				http.Error(w, http.StatusText(500), 500)
 			}
 		}()
-		h.ServeHTTP(rw, req)
+		h.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
+}
+
+func printPanic(reqID string, err interface{}) {
+	var buf bytes.Buffer
+	if reqID != "" {
+		cW(&buf, bBlack, "[%s] ", reqID)
+	}
+	cW(&buf, bRed, "panic: %+v", err)
+	log.Print(buf.String())
 }

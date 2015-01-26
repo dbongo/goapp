@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/dbongo/hackapp/model"
@@ -32,7 +31,6 @@ type Session struct {
 
 // LoginUser ...
 func LoginUser(c web.C, w http.ResponseWriter, req *http.Request) {
-	log.Printf("c.Env : %v", c.Env)
 	l := Login{}
 	defer req.Body.Close()
 	if err := json.NewDecoder(req.Body).Decode(&l); err != nil {
@@ -49,15 +47,8 @@ func LoginUser(c web.C, w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	c.Env["access_token"] = t.Raw
-	log.Printf("access_token: %v", c.Env["access_token"])
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&Session{
-		Email:    user.Email,
-		Username: user.Username,
-		Token:    t.Raw,
-	})
+	res := &Session{user.Email, user.Username, t.Raw}
+	json.NewEncoder(w).Encode(res)
 }
 
 // RegisterUser ...
@@ -78,38 +69,33 @@ func RegisterUser(c web.C, w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	c.Env["access_token"] = t.Raw
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(&Session{
-		Email:    user.Email,
-		Username: user.Username,
-		Token:    t.Raw,
-	})
+	res := &Session{user.Email, user.Username, t.Raw}
+	json.NewEncoder(w).Encode(res)
 }
 
-// UpdateUser ...
-func UpdateUser(c web.C, w http.ResponseWriter, req *http.Request) {
-	log.Printf("access_token: %v", c.Env["access_token"])
-	t := c.Env["access_token"].(string)
-	user := session.UserFromToken(t)
-	u := model.User{}
-	defer req.Body.Close()
-	if err := json.NewDecoder(req.Body).Decode(&u); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+// PutUser ...
+func PutUser(c web.C, w http.ResponseWriter, r *http.Request) {
+	//var ctx = context.FromC(c)
+	var user = ToUser(c)
+	if user == nil {
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	if len(u.Email) != 0 {
-		user.SetEmail(u.Email)
+	defer r.Body.Close()
+	in := model.User{}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	if len(u.Name) != 0 {
-		user.Name = u.Name
+	if len(in.Email) != 0 {
+		user.SetEmail(in.Email)
+	}
+	if len(in.Name) != 0 {
+		user.Name = in.Name
 	}
 	if err := user.Update(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
 }

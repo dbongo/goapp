@@ -6,9 +6,8 @@ import (
 	"net/http"
 
 	"github.com/goji/context"
-	"github.com/zenazn/goji/web/middleware"
 
-	mw "github.com/dbongo/hackapp/middleware"
+	"github.com/dbongo/hackapp/middleware"
 	"github.com/dbongo/hackapp/router"
 )
 
@@ -19,21 +18,17 @@ var (
 func main() {
 	flag.Parse()
 
-	// create api router
+	// create the router and add middleware
 	mux := router.New()
-
-	// configure api middleware
 	mux.Use(middleware.RequestID)
-	mux.Use(mw.Options)
+	mux.Use(middleware.Options)
 	mux.Use(context.Middleware)
-	mux.Use(mw.SetHeaders)
-	mux.Use(mw.HTTPLogger)
-	mux.Use(mw.Recovery)
-
-	// set api handler
+	mux.Use(middleware.SetHeaders)
+	mux.Use(middleware.HTTPLogger)
+	mux.Use(middleware.SetUser)
+	mux.Use(middleware.Recovery)
 	http.Handle("/api/", mux)
 
-	// start server on port 3000
 	if err := http.ListenAndServe(*port, nil); err != nil {
 		log.Fatal(err)
 	}
