@@ -16,9 +16,8 @@ import (
 )
 
 var (
-	signKey   []byte
-	verifyKey []byte
-	err       error
+	signKey, verifyKey []byte
+	err                error
 )
 
 // initialize keys for signing/verifying jwt tokens
@@ -38,8 +37,7 @@ func Validation(c *web.C, h http.Handler) http.Handler {
 			return verifyKey, nil
 		})
 		if err != nil {
-			msg := "error validating access_token"
-			http.Error(rw, msg, http.StatusUnauthorized)
+			http.Error(rw, "error validating access_token", http.StatusUnauthorized)
 			return
 		}
 		h.ServeHTTP(rw, req)
@@ -60,26 +58,8 @@ func New(email string) (*jwt.Token, error) {
 	return token, nil
 }
 
-// UserFromToken ...
-func UserFromToken(token string) *model.User {
-	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
-		return verifyKey, nil
-	})
-	if err != nil || !t.Valid {
-		return nil
-	}
-	email, ok := t.Claims["email"].(string)
-	if !ok {
-		return nil
-	}
-	user, _ := model.FindUserByEmail(email)
-	return user
-}
-
 // GetUser ...
 func GetUser(c context.Context, r *http.Request) *model.User {
-	log.Printf("context.Context: %v", c)
-	log.Println()
 	if r.Header.Get("Authorization") != "" {
 		return getUserBearer(c, r)
 	}
@@ -87,16 +67,12 @@ func GetUser(c context.Context, r *http.Request) *model.User {
 }
 
 func getUserBearer(c context.Context, r *http.Request) *model.User {
-	log.Printf("context.Context: %v", c)
-	log.Println()
 	var token = r.Header.Get("Authorization")
 	fmt.Sscanf(token, "Bearer %s", &token)
 	return getUserJWT(c, token)
 }
 
 func getUserJWT(c context.Context, token string) *model.User {
-	log.Printf("context.Context: %v", c)
-	log.Println()
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})
