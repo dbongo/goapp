@@ -88,7 +88,7 @@ func PutUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(in.Email) != 0 {
-		user.SetEmail(in.Email)
+		user.Email = in.Email
 	}
 	if len(in.Name) != 0 {
 		user.Name = in.Name

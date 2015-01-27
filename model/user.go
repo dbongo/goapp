@@ -33,7 +33,7 @@ func NewUser(email, username, password string) (*User, error) {
 	}
 	u := User{}
 	u.ID = bson.NewObjectId()
-	u.SetEmail(email)
+	u.Email = email
 	u.Username = username
 	u.hashPassword(password)
 	u.Created = time.Now()
@@ -82,11 +82,6 @@ func FindUserByEmail(email string) (*User, error) {
 		return nil, err
 	}
 	return user, nil
-}
-
-// SetEmail ...
-func (u *User) SetEmail(email string) {
-	u.Email = email
 }
 
 // Save ...
