@@ -9,68 +9,71 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-// Login ...
-type Login struct {
-	Email    string
-	Password string
-}
-
-// Register ...
-type Register struct {
-	Email    string
-	Username string
-	Password string
-}
-
-// Session ...
-type Session struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Token    string `json:"token"`
-}
-
 // LoginUser ...
 func LoginUser(c web.C, w http.ResponseWriter, req *http.Request) {
-	l := Login{}
+	login := struct {
+		Email, Password string
+	}{}
 	defer req.Body.Close()
-	if err := json.NewDecoder(req.Body).Decode(&l); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&login); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := model.AuthUser(l.Email, l.Password)
+	user, err := model.AuthUser(login.Email, login.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	t, err := session.New(user.Email)
+	token, err := session.New(user.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	res := &Session{user.Email, user.Username, t.Raw}
-	json.NewEncoder(w).Encode(res)
+	resp := struct {
+		*model.User
+		Token string `json:"token"`
+	}{user, token.Raw}
+	json.NewEncoder(w).Encode(&resp)
 }
 
 // RegisterUser ...
 func RegisterUser(c web.C, w http.ResponseWriter, req *http.Request) {
-	r := Register{}
+	register := struct {
+		Email, Username, Password string
+	}{}
 	defer req.Body.Close()
-	if err := json.NewDecoder(req.Body).Decode(&r); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&register); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := model.NewUser(r.Email, r.Username, r.Password)
+	user, err := model.NewUser(register.Email, register.Username, register.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	t, err := session.New(user.Email)
+	token, err := session.New(user.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	res := &Session{user.Email, user.Username, t.Raw}
-	json.NewEncoder(w).Encode(res)
+	resp := struct {
+		*model.User
+		Token string `json:"token"`
+	}{user, token.Raw}
+	json.NewEncoder(w).Encode(&resp)
+}
+
+// GetCurrentUser ...
+func GetCurrentUser(c web.C, w http.ResponseWriter, r *http.Request) {
+	var user = ToUser(c)
+	if user == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	resp := struct {
+		*model.User
+	}{user}
+	json.NewEncoder(w).Encode(&resp)
 }
 
 // PutUser ...

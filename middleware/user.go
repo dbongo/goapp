@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/dbongo/hackapp/session"
@@ -13,11 +12,7 @@ import (
 func SetUser(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		var ctx = context.FromC(*c)
-		log.Printf("ctx: %v", ctx)
-		log.Println()
 		var user = session.GetUser(ctx, r)
-		log.Printf("user: %v", user)
-		log.Println()
 		if user != nil && user.ID != "" {
 			UserToC(c, user)
 		}

@@ -15,13 +15,13 @@ import (
 // User ...
 type User struct {
 	ID        bson.ObjectId `bson:"_id" json:"-"`
-	Name      string        `bson:"name" json:"name,omitempty"`
-	Email     string        `bson:"email" json:"email,omitempty"`
-	Username  string        `bson:"username" json:"username,omitempty"`
+	Name      string        `bson:"name" json:"name"`
+	Email     string        `bson:"email" json:"email"`
+	Username  string        `bson:"username" json:"username"`
 	Password  string        `bson:"password" json:"-"`
-	Created   time.Time     `bson:"created" json:"created,omitempty"`
-	LastLogin time.Time     `bson:"lastlogin" json:"lastlogin,omitempty"`
-	Updated   time.Time     `bson:"updated" json:"updated,omitempty"`
+	Created   string        `bson:"created" json:"created"`
+	LastLogin string        `bson:"lastlogin" json:"lastlogin"`
+	Updated   string        `bson:"updated" json:"updated"`
 }
 
 // NewUser ...
@@ -36,7 +36,7 @@ func NewUser(email, username, password string) (*User, error) {
 	u.Email = email
 	u.Username = username
 	u.hashPassword(password)
-	u.Created = time.Now()
+	u.Created = time.Now().Format(time.RFC3339)
 	if err := u.Save(); err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func AuthUser(email, password string) (*User, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
 		return nil, err
 	}
-	u.LastLogin = time.Now()
+	u.LastLogin = time.Now().Format(time.RFC3339)
 	if err := u.Update(); err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (u *User) Update() error {
 		return err
 	}
 	defer ds.Close()
-	u.Updated = time.Now()
+	u.Updated = time.Now().Format(time.RFC3339)
 	return ds.Users().Update(bson.M{"_id": u.ID}, u)
 }
 

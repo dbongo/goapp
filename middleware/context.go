@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"log"
-
 	"github.com/dbongo/hackapp/model"
 	"github.com/zenazn/goji/web"
 )
@@ -10,8 +8,6 @@ import (
 // UserToC ...
 func UserToC(c *web.C, user *model.User) {
 	c.Env["user"] = user
-	log.Printf("c.Env: %v", c.Env)
-	log.Println()
 }
 
 // ToUser ...
