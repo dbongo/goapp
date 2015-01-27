@@ -14,7 +14,6 @@ func New() *web.Mux {
 	mux.Post("/api/register", handler.RegisterUser)
 
 	hello := web.New()
-	//hello.Use(session.Validation)
 	hello.Get("/api/hello", handler.HelloWorld)
 	hello.Get("/api/hello/:name", handler.HelloName)
 	mux.Handle("/api/hello", hello)

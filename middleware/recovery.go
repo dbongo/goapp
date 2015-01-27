@@ -30,8 +30,8 @@ func Recovery(c *web.C, h http.Handler) http.Handler {
 func printPanic(reqID string, err interface{}) {
 	var buf bytes.Buffer
 	if reqID != "" {
-		cW(&buf, bBlack, "[%s] ", reqID)
+		writeColor(&buf, bBlack, "[%s] ", reqID)
 	}
-	cW(&buf, bRed, "panic: %+v", err)
+	writeColor(&buf, bRed, "panic: %+v", err)
 	log.Print(buf.String())
 }

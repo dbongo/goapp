@@ -39,8 +39,7 @@ func init() {
 	}
 }
 
-// colorWrite
-func cW(buf *bytes.Buffer, color []byte, s string, args ...interface{}) {
+func writeColor(buf *bytes.Buffer, color []byte, s string, args ...interface{}) {
 	if isTTY {
 		buf.Write(color)
 	}

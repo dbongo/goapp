@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"os"
@@ -86,9 +87,9 @@ func logHTTP(h http.Handler) http.Handler {
 	return log
 }
 
-// [2015/01/22 23:30:48] [127.0.0.1:53773] 200 GET / 2.490822ms 4921B HTTP/1.1 curl/7.35.0
 func (log *Logger) response() {
 	for {
+		var buf bytes.Buffer
 		res := <-log.ch
 		timeStamp := fmt.Sprintf(
 			"%04d/%02d/%02d %02d:%02d:%02d",
@@ -99,18 +100,26 @@ func (log *Logger) response() {
 			res.start.Minute(),
 			res.start.Second(),
 		)
-		logRecord := fmt.Sprintf(
-			"[%s] [%s] %d %s %s %v %dB %s %s\n",
-			timeStamp,
-			res.ip,
-			res.responseStatus,
-			res.method,
-			res.rawpath,
-			time.Since(res.start),
-			res.responseBytes,
-			res.proto,
-			res.userAgent,
-		)
-		os.Stdout.WriteString(logRecord)
+		writeColor(&buf, bWhite, "%s ", timeStamp)
+		writeColor(&buf, bWhite, "%s - ", res.ip)
+		writeColor(&buf, bWhite, "%s ", res.method)
+		writeColor(&buf, bWhite, "%s ", res.rawpath)
+		status := res.responseStatus
+		if status < 200 {
+			writeColor(&buf, bBlue, "%03d ", status)
+		} else if status < 300 {
+			writeColor(&buf, bGreen, "%03d ", status)
+		} else if status < 400 {
+			writeColor(&buf, bCyan, "%03d ", status)
+		} else if status < 500 {
+			writeColor(&buf, bYellow, "%03d ", status)
+		} else {
+			writeColor(&buf, bRed, "%03d ", status)
+		}
+		writeColor(&buf, bWhite, "%v - ", time.Since(res.start))
+		writeColor(&buf, bWhite, "%d ", res.responseBytes)
+		writeColor(&buf, bWhite, "%s ", res.proto)
+		writeColor(&buf, bWhite, "%s\n", res.userAgent)
+		os.Stdout.WriteString(buf.String())
 	}
 }

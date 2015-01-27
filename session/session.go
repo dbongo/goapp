@@ -33,10 +33,10 @@ func init() {
 // Validation ...
 func Validation(c *web.C, h http.Handler) http.Handler {
 	fn := func(rw http.ResponseWriter, req *http.Request) {
-		_, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
 			return verifyKey, nil
 		})
-		if err != nil {
+		if !token.Valid || err != nil {
 			http.Error(rw, "error validating access_token", http.StatusUnauthorized)
 			return
 		}
@@ -76,6 +76,7 @@ func getUserJWT(c context.Context, token string) *model.User {
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})
+	log.Println(t)
 	if err != nil || !t.Valid {
 		return nil
 	}
