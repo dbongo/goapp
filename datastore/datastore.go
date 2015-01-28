@@ -1,6 +1,6 @@
 package datastore
 
-// // Datastore ...
-// type Datastore interface {
-// 	Userstore
-// }
+// Datastore ...
+type Datastore interface {
+	Userstore
+}

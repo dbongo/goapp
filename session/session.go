@@ -10,6 +10,7 @@ import (
 	"code.google.com/p/go.net/context"
 	"github.com/dgrijalva/jwt-go"
 
+	"github.com/dbongo/hackapp/datastore"
 	"github.com/dbongo/hackapp/logger"
 	"github.com/dbongo/hackapp/model"
 	"github.com/dbongo/hackapp/testkeys"
@@ -72,7 +73,7 @@ func userFromToken(c context.Context, token *jwt.Token) (*model.User, error) {
 	if !ok {
 		return nil, ErrClaimsEmail
 	}
-	user, err := model.FindUserByEmail(email)
+	user, err := datastore.GetUser(c, email)
 	if err != nil {
 		return nil, err
 	}
