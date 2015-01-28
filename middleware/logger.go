@@ -8,30 +8,23 @@ import (
 	"time"
 )
 
-// Config ...
-type Config struct {
-	Prefix               string
-	DisableAutoBrackets  bool
-	RemoteAddressHeaders []string
-}
-
 // Logger ...
 type Logger struct {
 	http.Handler
-
-	ch   chan *Record
-	conf Config
+	ch chan *Record
 }
 
 // Record ...
 type Record struct {
 	http.ResponseWriter
-
-	start               time.Time
-	ip, method, rawpath string
-	responseStatus      int
-	responseBytes       int64
-	proto, userAgent    string
+	start     time.Time
+	ip        string
+	method    string
+	rawpath   string
+	status    int
+	bytes     int64
+	proto     string
+	userAgent string
 }
 
 // HTTPLogger ...
@@ -45,20 +38,13 @@ func HTTPLogger(h http.Handler) http.Handler {
 
 func (log *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	addr := req.RemoteAddr
-	for _, headerKey := range log.conf.RemoteAddressHeaders {
-		if val := req.Header.Get(headerKey); len(val) > 0 {
-			addr = val
-			break
-		}
-	}
 	record := &Record{
 		ResponseWriter: w,
-
-		start:          time.Now().UTC(),
+		start:          time.Now().Local(),
 		ip:             addr,
 		method:         req.Method,
 		rawpath:        req.RequestURI,
-		responseStatus: http.StatusOK,
+		status:         http.StatusOK,
 		proto:          req.Proto,
 		userAgent:      req.UserAgent(),
 	}
@@ -68,13 +54,13 @@ func (log *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (r *Record) Write(b []byte) (int, error) {
 	written, err := r.ResponseWriter.Write(b)
-	r.responseBytes += int64(written)
+	r.bytes += int64(written)
 	return written, err
 }
 
 // WriteHeader ...
 func (r *Record) WriteHeader(status int) {
-	r.responseStatus = status
+	r.status = status
 	r.ResponseWriter.WriteHeader(status)
 }
 
@@ -100,26 +86,19 @@ func (log *Logger) response() {
 			res.start.Minute(),
 			res.start.Second(),
 		)
-		writeColor(&buf, bWhite, "%s ", timeStamp)
-		writeColor(&buf, bWhite, "%s - ", res.ip)
-		writeColor(&buf, bWhite, "%s ", res.method)
-		writeColor(&buf, bWhite, "%s ", res.rawpath)
-		status := res.responseStatus
-		if status < 200 {
-			writeColor(&buf, bBlue, "%03d ", status)
-		} else if status < 300 {
-			writeColor(&buf, bGreen, "%03d ", status)
-		} else if status < 400 {
-			writeColor(&buf, bCyan, "%03d ", status)
-		} else if status < 500 {
-			writeColor(&buf, bYellow, "%03d ", status)
+		fmt.Fprintf(&buf, "%s %s - %s %s ", timeStamp, res.ip, res.method, res.rawpath)
+		if res.status < 200 {
+			writeColor(&buf, bBlue, "%03d ", res.status)
+		} else if res.status < 300 {
+			writeColor(&buf, bGreen, "%03d ", res.status)
+		} else if res.status < 400 {
+			writeColor(&buf, bCyan, "%03d ", res.status)
+		} else if res.status < 500 {
+			writeColor(&buf, bYellow, "%03d ", res.status)
 		} else {
-			writeColor(&buf, bRed, "%03d ", status)
+			writeColor(&buf, bRed, "%03d ", res.status)
 		}
-		writeColor(&buf, bWhite, "%v - ", time.Since(res.start))
-		writeColor(&buf, bWhite, "%d ", res.responseBytes)
-		writeColor(&buf, bWhite, "%s ", res.proto)
-		writeColor(&buf, bWhite, "%s\n", res.userAgent)
+		fmt.Fprintf(&buf, "%v - %d %s %s\n", time.Since(res.start), res.bytes, res.proto, res.userAgent)
 		os.Stdout.WriteString(buf.String())
 	}
 }

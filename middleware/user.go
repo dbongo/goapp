@@ -11,8 +11,8 @@ import (
 // SetUser ...
 func SetUser(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		var ctx = context.FromC(*c)
-		var user = session.GetUser(ctx, r)
+		ctx := context.FromC(*c)
+		user := session.GetUser(ctx, r)
 		if user != nil && user.ID != "" {
 			UserToC(c, user)
 		}

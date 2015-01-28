@@ -1,27 +1,33 @@
 package session
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/dbongo/hackapp/logger"
 	"github.com/dbongo/hackapp/model"
 	"github.com/dbongo/hackapp/testkeys"
 	"golang.org/x/net/context"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/zenazn/goji/web"
 )
 
 var (
-	signKey, verifyKey []byte
-	err                error
+	// ErrClaimsEmail ...
+	ErrClaimsEmail = errors.New("email from token not ok")
+)
+
+var (
+	signKey   []byte
+	verifyKey []byte
 )
 
 // initialize keys for signing/verifying jwt tokens
 func init() {
+	var err error
 	if signKey, err = ioutil.ReadFile(testkeys.Private); err != nil {
 		log.Fatal(err)
 	}
@@ -30,60 +36,45 @@ func init() {
 	}
 }
 
-// Validation ...
-func Validation(c *web.C, h http.Handler) http.Handler {
-	fn := func(rw http.ResponseWriter, req *http.Request) {
-		token, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
-			return verifyKey, nil
-		})
-		if !token.Valid || err != nil {
-			http.Error(rw, "error validating access_token", http.StatusUnauthorized)
-			return
-		}
-		h.ServeHTTP(rw, req)
-	}
-	return http.HandlerFunc(fn)
-}
-
 // New generates signed JWT token in string format
-func New(email string) (*jwt.Token, error) {
+func New(email string) (string, error) {
 	token := jwt.New(jwt.GetSigningMethod("RS256"))
 	token.Claims["email"] = email
 	token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-	token.Raw, err = token.SignedString(signKey)
-	if err != nil {
-		return nil, err
-	}
-	token.Valid = true
-	return token, nil
+	signedToken, err := token.SignedString(signKey)
+	return signedToken, err
 }
 
 // GetUser ...
-func GetUser(c context.Context, r *http.Request) *model.User {
-	if r.Header.Get("Authorization") != "" {
-		return getUserBearer(c, r)
+func GetUser(c context.Context, req *http.Request) *model.User {
+	if req.Header.Get("Authorization") != "" {
+		user, err := tokenFromRequest(c, req)
+		if err != nil {
+			logger.Error.Println(err)
+		}
+		return user
 	}
 	return nil
 }
 
-func getUserBearer(c context.Context, r *http.Request) *model.User {
-	var token = r.Header.Get("Authorization")
-	fmt.Sscanf(token, "Bearer %s", &token)
-	return getUserJWT(c, token)
-}
-
-func getUserJWT(c context.Context, token string) *model.User {
-	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+func tokenFromRequest(c context.Context, req *http.Request) (*model.User, error) {
+	token, err := jwt.ParseFromRequest(req, func(token *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})
-	log.Println(t)
-	if err != nil || !t.Valid {
-		return nil
+	if err != nil || !token.Valid {
+		return nil, err
 	}
-	email, ok := t.Claims["email"].(string)
+	return userFromToken(c, token)
+}
+
+func userFromToken(c context.Context, token *jwt.Token) (*model.User, error) {
+	email, ok := token.Claims["email"].(string)
 	if !ok {
-		return nil
+		return nil, ErrClaimsEmail
 	}
-	user, _ := model.FindUserByEmail(email)
-	return user
+	user, err := model.FindUserByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

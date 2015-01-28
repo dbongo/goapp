@@ -32,7 +32,7 @@ func LoginUser(c web.C, w http.ResponseWriter, req *http.Request) {
 	resp := struct {
 		*model.User
 		Token string `json:"token"`
-	}{user, token.Raw}
+	}{user, token}
 	json.NewEncoder(w).Encode(&resp)
 }
 
@@ -59,7 +59,7 @@ func RegisterUser(c web.C, w http.ResponseWriter, req *http.Request) {
 	resp := struct {
 		*model.User
 		Token string `json:"token"`
-	}{user, token.Raw}
+	}{user, token}
 	json.NewEncoder(w).Encode(&resp)
 }
 

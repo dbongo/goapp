@@ -22,5 +22,5 @@ func init() {
 	Trace = log.New(ioutil.Discard, "TRACE: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Info = log.New(file, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Warning = log.New(io.MultiWriter(file, os.Stdout), "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
-	Error = log.New(io.MultiWriter(file, os.Stderr), "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Error = log.New(file, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 }
