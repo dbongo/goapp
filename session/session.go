@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"code.google.com/p/go.net/context"
+	"github.com/dgrijalva/jwt-go"
+
 	"github.com/dbongo/hackapp/logger"
 	"github.com/dbongo/hackapp/model"
 	"github.com/dbongo/hackapp/testkeys"
-	"golang.org/x/net/context"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
 var (
