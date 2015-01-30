@@ -8,21 +8,22 @@ import (
 	"time"
 )
 
+var urlmap = make(map[string]map[string]*Response)
+
 // Logger ...
 type Logger struct {
 	http.Handler
-
 	ch chan *Response
 }
 
 // Response ...
 type Response struct {
 	http.ResponseWriter
-
 	start     time.Time
 	ip        string
 	method    string
 	rawpath   string
+	counter   int64
 	status    int
 	bytes     int64
 	proto     string
@@ -40,6 +41,7 @@ func HTTPLogger(h http.Handler) http.Handler {
 
 func (l *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	addr := req.RemoteAddr
+	numreqs := count(req.RequestURI, req.Method)
 	res := &Response{
 		ResponseWriter: w,
 		start:          time.Now().Local(),
@@ -47,6 +49,7 @@ func (l *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		method:         req.Method,
 		rawpath:        req.RequestURI,
 		status:         http.StatusOK,
+		counter:        numreqs,
 		proto:          req.Proto,
 		userAgent:      req.UserAgent(),
 	}
@@ -100,7 +103,36 @@ func (l *Logger) response() {
 		} else {
 			writeColor(&buf, bRed, "%03d ", res.status)
 		}
-		fmt.Fprintf(&buf, "%v - %d %s %s\n", time.Since(res.start), res.bytes, res.proto, res.userAgent)
+		fmt.Fprintf(&buf, "%v - %dx %d %s %s\n", time.Since(res.start), res.counter, res.bytes, res.proto, res.userAgent)
 		os.Stdout.WriteString(buf.String())
 	}
+}
+
+func count(requrl, reqmethod string) int64 {
+	var reqnum int64
+	if method, ok := urlmap[requrl]; ok {
+		if r, ok := method[reqmethod]; ok {
+			r.counter++
+			reqnum = r.counter
+		} else {
+			first := &Response{
+				rawpath: requrl,
+				method:  reqmethod,
+				counter: 1,
+			}
+			reqnum = first.counter
+			urlmap[requrl][reqmethod] = first
+		}
+	} else {
+		methodmap := make(map[string]*Response)
+		first := &Response{
+			rawpath: requrl,
+			method:  reqmethod,
+			counter: 1,
+		}
+		reqnum = first.counter
+		methodmap[reqmethod] = first
+		urlmap[requrl] = methodmap
+	}
+	return reqnum
 }
