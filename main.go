@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/dbongo/hackapp/datastore"
 	"github.com/dbongo/hackapp/datastore/database"
@@ -16,16 +17,33 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-var (
-	port = flag.String("p", ":3000", "server port")
-	db   *mgo.Database
+const (
+	defaultAddress = "127.0.0.1:27017"
+	defaultName    = "hackdb"
 )
+
+var (
+	port   *string
+	db     *mgo.Database
+	dbaddr string
+	dbname string
+)
+
+func init() {
+	port = flag.String("p", ":3000", "server port")
+	if dbaddr = os.Getenv("MONGODB_PORT_27017_TCP_ADDR"); dbaddr == "" {
+		dbaddr = defaultAddress
+	}
+	if dbname = os.Getenv("MONGODB_NAME"); dbname == "" {
+		dbname = defaultName
+	}
+}
 
 func main() {
 	flag.Parse()
 
 	// create the db
-	db = database.New()
+	db = database.New(dbaddr, dbname)
 	defer db.Session.Close()
 
 	// create the router and add middleware

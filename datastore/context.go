@@ -25,7 +25,7 @@ func (c *wrapper) Value(key interface{}) interface{} {
 	return c.Context.Value(key)
 }
 
-// FromContext returns the sql.DB associated with this context.
+// FromContext returns the mongodb collection associated with this context.
 func FromContext(c context.Context) Datastore {
 	return c.Value(reqkey).(Datastore)
 }

@@ -14,68 +14,61 @@ import (
 
 // LoginUser ...
 func LoginUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	ctx := context.FromC(c)
-	login := struct {
-		Email, Password string
-	}{}
-
 	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(&login); err != nil {
+	data := struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}{}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	user, err := datastore.PostUserLogin(ctx, login.Email, login.Password)
+	ctx := context.FromC(c)
+	user, err := datastore.AuthUser(ctx, data.Email, data.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	token, err := session.New(user.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	resp := struct {
+	response := struct {
 		*model.User
 		Token string `json:"token"`
 	}{user, token}
-
-	json.NewEncoder(w).Encode(&resp)
+	json.NewEncoder(w).Encode(&response)
 }
 
 // RegisterUser ...
 func RegisterUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	ctx := context.FromC(c)
-	register := struct {
-		Email, Username, Password string
-	}{}
-
 	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(&register); err != nil {
+	data := struct {
+		Email    string `json:"email"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	user, err := datastore.PostUserRegistration(ctx, register.Email, register.Username, register.Password)
+	ctx := context.FromC(c)
+	user, err := datastore.CreateUser(ctx, data.Email, data.Username, data.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	token, err := session.New(user.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	resp := struct {
+	response := struct {
 		*model.User
 		Token string `json:"token"`
 	}{user, token}
-
-	json.NewEncoder(w).Encode(&resp)
+	json.NewEncoder(w).Encode(&response)
 }
 
 // GetCurrentUser ...
@@ -85,39 +78,32 @@ func GetCurrentUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
-	resp := struct {
-		*model.User
-	}{user}
-
-	json.NewEncoder(w).Encode(&resp)
+	json.NewEncoder(w).Encode(user)
 }
 
 // PutUser ...
 func PutUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	ctx := context.FromC(c)
+	defer r.Body.Close()
 	user := ToUser(c)
 	if user == nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
-	defer r.Body.Close()
-	in := model.User{}
-	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+	update := model.User{}
+	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if len(in.Email) != 0 {
-		user.Email = in.Email
+	if len(update.Email) != 0 {
+		user.Email = update.Email
 	}
-	if len(in.Name) != 0 {
-		user.Name = in.Name
+	if len(update.Name) != 0 {
+		user.Name = update.Name
 	}
-	if err := datastore.PutUser(ctx, user); err != nil {
+	ctx := context.FromC(c)
+	if err := datastore.UpdateUser(ctx, user); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 	json.NewEncoder(w).Encode(user)
 }

@@ -12,24 +12,24 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// Userstore ...
-type Userstore struct {
+// UserCollection ...
+type UserCollection struct {
 	*mgo.Collection
 }
 
-// NewUserstore ...
-func NewUserstore(users *mgo.Collection) *Userstore {
+// NewUserCollection ...
+func NewUserCollection(users *mgo.Collection) *UserCollection {
 	email := mgo.Index{
 		Key:        []string{"email"},
 		Unique:     true,
 		Background: true,
 	}
 	users.EnsureIndex(email)
-	return &Userstore{users}
+	return &UserCollection{users}
 }
 
 // GetUser ...
-func (u *Userstore) GetUser(email string) (*model.User, error) {
+func (u *UserCollection) GetUser(email string) (*model.User, error) {
 	user := model.User{}
 	err := u.Find(bson.M{"email": email}).One(&user)
 	if err != nil {
@@ -38,14 +38,14 @@ func (u *Userstore) GetUser(email string) (*model.User, error) {
 	return &user, nil
 }
 
-// PutUser ...
-func (u *Userstore) PutUser(user *model.User) error {
+// UpdateUser ...
+func (u *UserCollection) UpdateUser(user *model.User) error {
 	user.Updated = time.Now().Format(time.RFC3339)
 	return u.Update(bson.M{"_id": user.ID}, user)
 }
 
-// PostUserLogin ...
-func (u *Userstore) PostUserLogin(email, password string) (*model.User, error) {
+// AuthUser ...
+func (u *UserCollection) AuthUser(email, password string) (*model.User, error) {
 	user, err := u.GetUser(email)
 	if err != nil {
 		return nil, err
@@ -54,14 +54,14 @@ func (u *Userstore) PostUserLogin(email, password string) (*model.User, error) {
 		return nil, err
 	}
 	user.LastLogin = time.Now().Format(time.RFC3339)
-	if err := u.PutUser(user); err != nil {
+	if err := u.UpdateUser(user); err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-// PostUserRegistration ...
-func (u *Userstore) PostUserRegistration(email, username, password string) (*model.User, error) {
+// CreateUser ...
+func (u *UserCollection) CreateUser(email, username, password string) (*model.User, error) {
 	_, err := u.GetUser(email)
 	if email == "" || username == "" || password == "" {
 		return nil, errors.New("email, username, password are required fields")

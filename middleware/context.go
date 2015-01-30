@@ -12,13 +12,13 @@ func UserToC(c *web.C, user *model.User) {
 
 // ToUser ...
 func ToUser(c *web.C) *model.User {
-	var v = c.Env["user"]
-	if v == nil {
+	value := c.Env["user"]
+	if value == nil {
 		return nil
 	}
-	u, ok := v.(*model.User)
+	user, ok := value.(*model.User)
 	if !ok {
 		return nil
 	}
-	return u
+	return user
 }
