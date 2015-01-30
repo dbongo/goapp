@@ -8,16 +8,9 @@ import (
 
 // UserCollection ...
 type UserCollection interface {
-	// GetUser ...
 	GetUser(email string) (*model.User, error)
-
-	// UpdateUser ...
 	UpdateUser(user *model.User) error
-
-	// AuthUser ...
 	AuthUser(email, password string) (*model.User, error)
-
-	// CreateUser ...
 	CreateUser(email, username, password string) (*model.User, error)
 }
 

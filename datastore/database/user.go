@@ -30,12 +30,12 @@ func NewUserCollection(users *mgo.Collection) *UserCollection {
 
 // GetUser ...
 func (u *UserCollection) GetUser(email string) (*model.User, error) {
-	user := model.User{}
-	err := u.Find(bson.M{"email": email}).One(&user)
+	user := &model.User{}
+	err := u.Find(bson.M{"email": email}).One(user)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
-	return &user, nil
+	return user, nil
 }
 
 // UpdateUser ...

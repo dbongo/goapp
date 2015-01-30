@@ -23,8 +23,9 @@ const (
 )
 
 var (
-	port   *string
-	db     *mgo.Database
+	port *string
+	db   *mgo.Database
+
 	dbaddr string
 	dbname string
 )
@@ -55,6 +56,7 @@ func main() {
 	mux.Use(middleware.HTTPLogger)
 	mux.Use(middleware.SetUser)
 	mux.Use(middleware.Recovery)
+
 	http.Handle("/api/", mux)
 
 	if err := http.ListenAndServe(*port, nil); err != nil {
@@ -65,7 +67,7 @@ func main() {
 // ContextMiddleware creates a new go.net/context and injects into the current goji context.
 func ContextMiddleware(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		var ctx = context.Background()
+		ctx := context.Background()
 		ctx = datastore.NewContext(ctx, database.NewDatastore(db))
 		webctx.Set(c, ctx)
 		h.ServeHTTP(w, r)

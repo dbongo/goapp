@@ -11,12 +11,14 @@ import (
 // Logger ...
 type Logger struct {
 	http.Handler
-	ch chan *Record
+
+	ch chan *Response
 }
 
-// Record ...
-type Record struct {
+// Response ...
+type Response struct {
 	http.ResponseWriter
+
 	start     time.Time
 	ip        string
 	method    string
@@ -36,9 +38,9 @@ func HTTPLogger(h http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func (log *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (l *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	addr := req.RemoteAddr
-	record := &Record{
+	res := &Response{
 		ResponseWriter: w,
 		start:          time.Now().Local(),
 		ip:             addr,
@@ -48,18 +50,18 @@ func (log *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		proto:          req.Proto,
 		userAgent:      req.UserAgent(),
 	}
-	log.Handler.ServeHTTP(record, req)
-	log.ch <- record
+	l.Handler.ServeHTTP(res, req)
+	l.ch <- res
 }
 
-func (r *Record) Write(b []byte) (int, error) {
+func (r *Response) Write(b []byte) (int, error) {
 	written, err := r.ResponseWriter.Write(b)
 	r.bytes += int64(written)
 	return written, err
 }
 
 // WriteHeader ...
-func (r *Record) WriteHeader(status int) {
+func (r *Response) WriteHeader(status int) {
 	r.status = status
 	r.ResponseWriter.WriteHeader(status)
 }
@@ -67,16 +69,16 @@ func (r *Record) WriteHeader(status int) {
 func logHTTP(h http.Handler) http.Handler {
 	log := &Logger{
 		Handler: h,
-		ch:      make(chan *Record, 1000),
+		ch:      make(chan *Response, 1000),
 	}
 	go log.response()
 	return log
 }
 
-func (log *Logger) response() {
+func (l *Logger) response() {
 	for {
 		var buf bytes.Buffer
-		res := <-log.ch
+		res := <-l.ch
 		timeStamp := fmt.Sprintf(
 			"%04d/%02d/%02d %02d:%02d:%02d",
 			res.start.Year(),

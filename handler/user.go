@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/dbongo/hackapp/datastore"
@@ -12,98 +11,100 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
+var (
+	err error
+)
+
 // LoginUser ...
 func LoginUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
 	data := struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}{}
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	res := struct {
+		User  *model.User `json:"user"`
+		Token string      `json:"token"`
+	}{}
+	if jsonRequest(r, &data) {
+		ctx := context.FromC(c)
+		if res.User, err = datastore.AuthUser(ctx, data.Email, data.Password); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if res.Token, err = session.New(res.User.Email); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
-	ctx := context.FromC(c)
-	user, err := datastore.AuthUser(ctx, data.Email, data.Password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	token, err := session.New(user.Email)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	response := struct {
-		*model.User
-		Token string `json:"token"`
-	}{user, token}
-	json.NewEncoder(w).Encode(&response)
+	jsonResponseWriter(w, res)
 }
 
 // RegisterUser ...
 func RegisterUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
 	data := struct {
 		Email    string `json:"email"`
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}{}
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	res := struct {
+		User  *model.User `json:"user"`
+		Token string      `json:"token"`
+	}{}
+	if jsonRequest(r, &data) {
+		ctx := context.FromC(c)
+		if res.User, err = datastore.CreateUser(ctx, data.Email, data.Username, data.Password); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if res.Token, err = session.New(res.User.Email); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
-	ctx := context.FromC(c)
-	user, err := datastore.CreateUser(ctx, data.Email, data.Username, data.Password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	token, err := session.New(user.Email)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	response := struct {
-		*model.User
-		Token string `json:"token"`
-	}{user, token}
-	json.NewEncoder(w).Encode(&response)
+	jsonResponseWriter(w, res)
 }
 
 // GetCurrentUser ...
 func GetCurrentUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	user := ToUser(c)
-	if user == nil {
+	res := struct {
+		User *model.User `json:"user"`
+	}{}
+	if res.User = ToUser(c); res.User == nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	json.NewEncoder(w).Encode(user)
+	jsonResponseWriter(w, res)
 }
 
 // PutUser ...
 func PutUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	user := ToUser(c)
-	if user == nil {
+	data := struct {
+		Email    string `json:"email"`
+		Name     string `json:"name"`
+		Username string `json:"username"`
+	}{}
+	res := struct {
+		User *model.User `json:"user"`
+	}{}
+	if res.User = ToUser(c); res.User == nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	update := model.User{}
-	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	if jsonRequest(r, &data) {
+		if len(data.Email) != 0 {
+			res.User.Email = data.Email
+		}
+		if len(data.Name) != 0 {
+			res.User.Name = data.Name
+		}
+		if len(data.Username) != 0 {
+			res.User.Username = data.Username
+		}
+		ctx := context.FromC(c)
+		if err := datastore.UpdateUser(ctx, res.User); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
-	if len(update.Email) != 0 {
-		user.Email = update.Email
-	}
-	if len(update.Name) != 0 {
-		user.Name = update.Name
-	}
-	ctx := context.FromC(c)
-	if err := datastore.UpdateUser(ctx, user); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	json.NewEncoder(w).Encode(user)
+	jsonResponseWriter(w, res)
 }
