@@ -79,7 +79,6 @@ func GetCurrentUser(c web.C, w http.ResponseWriter, r *http.Request) {
 // PutUser ...
 func PutUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	data := struct {
-		Email    string `json:"email"`
 		Name     string `json:"name"`
 		Username string `json:"username"`
 	}{}
@@ -91,9 +90,6 @@ func PutUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if jsonRequest(r, &data) {
-		if len(data.Email) != 0 {
-			res.User.Email = data.Email
-		}
 		if len(data.Name) != 0 {
 			res.User.Name = data.Name
 		}
