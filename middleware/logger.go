@@ -40,16 +40,14 @@ func HTTPLogger(h http.Handler) http.Handler {
 }
 
 func (l *Logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	addr := req.RemoteAddr
-	numreqs := count(req.RequestURI, req.Method)
 	res := &Response{
 		ResponseWriter: w,
 		start:          time.Now().Local(),
-		ip:             addr,
+		ip:             req.RemoteAddr,
 		method:         req.Method,
 		rawpath:        req.RequestURI,
 		status:         http.StatusOK,
-		counter:        numreqs,
+		counter:        count(req.RequestURI, req.Method),
 		proto:          req.Proto,
 		userAgent:      req.UserAgent(),
 	}

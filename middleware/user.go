@@ -32,3 +32,20 @@ func RequireUser(c *web.C, h http.Handler) http.Handler {
 	}
 	return http.HandlerFunc(fn)
 }
+
+// RequireAdminUser ...
+func RequireAdminUser(c *web.C, h http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		user := ToUser(c)
+		switch {
+		case user == nil:
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		case user != nil && !user.Admin:
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		h.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
+}

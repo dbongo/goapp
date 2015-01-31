@@ -25,5 +25,10 @@ func New() *web.Mux {
 	user.Put("/api/user", handler.PutUser)
 	mux.Handle("/api/user", user)
 
+	users := web.New()
+	users.Use(middleware.RequireAdminUser)
+	users.Get("/api/users", handler.GetUserList)
+	mux.Handle("/api/users", users)
+
 	return mux
 }

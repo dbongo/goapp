@@ -30,12 +30,22 @@ func NewUserCollection(users *mgo.Collection) *UserCollection {
 
 // GetUser ...
 func (u *UserCollection) GetUser(email string) (*model.User, error) {
-	user := &model.User{}
+	user := new(model.User)
 	err := u.Find(bson.M{"email": email}).One(user)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
 	return user, nil
+}
+
+// GetUserList ...
+func (u *UserCollection) GetUserList() ([]*model.User, error) {
+	var users []*model.User
+	err := u.Find(nil).All(&users)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 // UpdateUser ...
@@ -68,8 +78,9 @@ func (u *UserCollection) CreateUser(email, username, password string) (*model.Us
 	} else if err == nil {
 		return nil, errors.New("please provide another email, " + email + " is taken")
 	}
-	user := &model.User{}
+	user := new(model.User)
 	user.ID = bson.NewObjectId()
+	user.Admin = isAdmin(u)
 	user.Email = email
 	user.Username = username
 	user.Password = hashPassword(password)
@@ -86,4 +97,13 @@ func hashPassword(password string) string {
 		log.Fatal(err)
 	}
 	return string(hash[:])
+}
+
+func isAdmin(u *UserCollection) bool {
+	var users []*model.User
+	users, _ = u.GetUserList()
+	if users == nil || len(users) == 0 {
+		return true
+	}
+	return false
 }

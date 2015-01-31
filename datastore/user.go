@@ -9,6 +9,7 @@ import (
 // UserCollection ...
 type UserCollection interface {
 	GetUser(email string) (*model.User, error)
+	GetUserList() ([]*model.User, error)
 	UpdateUser(user *model.User) error
 	AuthUser(email, password string) (*model.User, error)
 	CreateUser(email, username, password string) (*model.User, error)
@@ -17,6 +18,11 @@ type UserCollection interface {
 // GetUser ...
 func GetUser(c context.Context, email string) (*model.User, error) {
 	return FromContext(c).GetUser(email)
+}
+
+// GetUserList ...
+func GetUserList(c context.Context) ([]*model.User, error) {
+	return FromContext(c).GetUserList()
 }
 
 // UpdateUser ...
