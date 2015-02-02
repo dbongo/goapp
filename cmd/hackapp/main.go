@@ -27,16 +27,13 @@ var (
 	db   *mgo.Database
 
 	dbaddr string
-	dbname string
 )
 
 func init() {
 	port = flag.String("p", ":3000", "server port")
+
 	if dbaddr = os.Getenv("MONGODB_PORT_27017_TCP_ADDR"); dbaddr == "" {
 		dbaddr = defaultAddress
-	}
-	if dbname = os.Getenv("MONGODB_NAME"); dbname == "" {
-		dbname = defaultName
 	}
 }
 
@@ -44,12 +41,12 @@ func main() {
 	flag.Parse()
 
 	// create the db
-	db = database.New(dbaddr, dbname)
+	db = database.New(dbaddr, defaultName)
 	defer db.Session.Close()
 
 	// create the router and add middleware
 	mux := router.New()
-	mux.Use(middleware.RequestID)
+
 	mux.Use(middleware.Options)
 	mux.Use(ContextMiddleware)
 	mux.Use(middleware.SetHeaders)

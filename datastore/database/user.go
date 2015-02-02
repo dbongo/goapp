@@ -41,7 +41,7 @@ func (u *UserCollection) GetUser(email string) (*model.User, error) {
 // GetUserList ...
 func (u *UserCollection) GetUserList() ([]*model.User, error) {
 	var users []*model.User
-	err := u.Find(nil).All(&users)
+	err := u.Find(bson.M{}).All(&users)
 	if err != nil {
 		return nil, err
 	}

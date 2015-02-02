@@ -14,10 +14,8 @@ import (
 // Recovery prints a request ID if one is provided.
 func Recovery(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		reqID := GetReqID(*c)
 		defer func() {
 			if err := recover(); err != nil {
-				printPanic(reqID, err)
 				debug.PrintStack()
 				http.Error(w, http.StatusText(500), 500)
 			}

@@ -1,11 +1,10 @@
-FROM dbongo/go
+FROM google/golang
 
-RUN mkdir -p /go/src/github.com/dbongo/hackapp
-ADD . /go/src/github.com/dbongo/hackapp
-WORKDIR /go/src/github.com/dbongo/hackapp
+ADD . /gopath/src/github.com/dbongo/hackapp/
+WORKDIR /gopath/src/github.com/dbongo/hackapp
 
-RUN go get -d ./...
-RUN go build
+RUN apt-get update
+RUN make deps build install
 
 EXPOSE 3000
-ENTRYPOINT ["./hackapp"]
+ENTRYPOINT ["/usr/local/bin/hackappd"]

@@ -7,8 +7,8 @@ package testkeys
 //     openssl rsa -in jwt.pem -pubout > jwt.pub.pem
 //
 const (
-	Private = "../../testkeys/jwt.pem"
-	Public  = "../../testkeys/jwt.pub.pem"
+	Private = "testkeys/jwt.pem"
+	Public  = "testkeys/jwt.pub.pem"
 )
 
 // TLS certificate Generated with following command:
@@ -18,6 +18,6 @@ const (
 // generate_cert.go is available at http://golang.org/src/pkg/crypto/tls/generate_cert.go
 //
 const (
-	Key  = "../../testkeys/key.pem"
-	Cert = "../../testkeys/cert.pem"
+	Key  = "testkeys/key.pem"
+	Cert = "testkeys/cert.pem"
 )

@@ -15,12 +15,16 @@ func TestUserCollection(t *testing.T) {
 	db := New(testaddr, testname)
 	uc := NewUserCollection(db.C(users))
 	defer db.Session.Close()
-	g := goblin.Goblin(t)
-	g.Describe("UserCollection", func() {
-		g.Before(func() {
+
+	test := goblin.Goblin(t)
+
+	test.Describe("UserCollection", func() {
+
+		test.Before(func() {
 			uc.DropCollection()
 		})
-		g.It("Should create the admin user", func() {
+
+		test.It("Should create the admin user", func() {
 			data := struct {
 				Email    string
 				Username string
@@ -31,11 +35,12 @@ func TestUserCollection(t *testing.T) {
 				Password: "abc123",
 			}
 			user, err := uc.CreateUser(data.Email, data.Username, data.Password)
-			g.Assert(err == nil).IsTrue()
-			g.Assert(user.ID != "").IsTrue()
-			g.Assert(user.Admin == true).IsTrue()
+			test.Assert(err == nil).IsTrue()
+			test.Assert(user.ID != "").IsTrue()
+			test.Assert(user.Admin == true).IsTrue()
 		})
-		g.It("Should create a user", func() {
+
+		test.It("Should create a user", func() {
 			data := struct {
 				Email    string
 				Username string
@@ -46,9 +51,9 @@ func TestUserCollection(t *testing.T) {
 				Password: "user123",
 			}
 			user, err := uc.CreateUser(data.Email, data.Username, data.Password)
-			g.Assert(err == nil).IsTrue()
-			g.Assert(user.ID != "").IsTrue()
-			g.Assert(user.Admin == false).IsTrue()
+			test.Assert(err == nil).IsTrue()
+			test.Assert(user.ID != "").IsTrue()
+			test.Assert(user.Admin == false).IsTrue()
 		})
 	})
 }
