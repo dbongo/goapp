@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/dbongo/hackapp/datastore"
@@ -64,17 +65,34 @@ func RegisterUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	jsonResponseWriter(w, res)
 }
 
-// GetCurrentUser ...
+// GetCurrentUser accepts a request to retrieve the currently authenticated
+// user from the datastore and return in JSON format.
+//
+// GET /api/user
+//
 func GetCurrentUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	res := struct {
-		User *model.User `json:"user"`
-	}{}
-	if res.User = ToUser(c); res.User == nil {
+	user := ToUser(c)
+	if user == nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	jsonResponseWriter(w, res)
+	data := struct {
+		*model.User
+	}{user}
+	json.NewEncoder(w).Encode(&data)
 }
+
+// GetCurrentUser ...
+// func GetCurrentUser(c web.C, w http.ResponseWriter, r *http.Request) {
+// 	res := struct {
+// 		User *model.User `json:"user"`
+// 	}{}
+// 	if res.User = ToUser(c); res.User == nil {
+// 		w.WriteHeader(http.StatusUnauthorized)
+// 		return
+// 	}
+// 	jsonResponseWriter(w, res)
+// }
 
 // PutUser ...
 func PutUser(c web.C, w http.ResponseWriter, r *http.Request) {

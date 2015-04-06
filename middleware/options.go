@@ -13,8 +13,9 @@ func Options(c *web.C, h http.Handler) http.Handler {
 		if r.Method == "OPTIONS" {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization")
 			w.Header().Set("Allow", "HEAD,GET,POST,PUT,DELETE,OPTIONS")
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			return
 		}

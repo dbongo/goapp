@@ -20,6 +20,7 @@ import (
 const (
 	defaultAddress = "127.0.0.1:27017"
 	defaultName    = "hackapp"
+	localURL       = "http://localhost:3000/api"
 )
 
 var (
@@ -31,7 +32,7 @@ var (
 
 func init() {
 	port = flag.String("p", ":3000", "server port")
-
+	os.Setenv("HACKAPP_SERVER", "http://localhost:3000")
 	if dbaddr = os.Getenv("MONGODB_PORT_27017_TCP_ADDR"); dbaddr == "" {
 		dbaddr = defaultAddress
 	}
@@ -46,7 +47,6 @@ func main() {
 
 	// create the router and add middleware
 	mux := router.New()
-
 	mux.Use(middleware.Options)
 	mux.Use(ContextMiddleware)
 	mux.Use(middleware.SetHeaders)

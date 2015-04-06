@@ -1,4 +1,4 @@
-all: build
+default: build
 
 deps:
 
@@ -6,8 +6,12 @@ deps:
 
 build:
 
-	mkdir -p packaging/root/usr/local/bin
-	go build -o packaging/root/usr/local/bin/hackappd github.com/dbongo/hackapp/cmd/hackapp
+	cd cmd/hackapp; \
+	go build; \
+	cd ../../cli; \
+	go build
+	#mkdir -p packaging/root/usr/local/bin
+	#go build -o packaging/root/usr/local/bin/hackappd github.com/dbongo/hackapp/cmd/hackapp
 
 install:
 
@@ -15,11 +19,15 @@ install:
 
 run:
 
-	@go run cmd/hackapp/main.go
+	cd cli; \
+	hackapp server
+	#@go run cmd/hackapp/main.go
 
 clean:
 
-	rm -f packaging/root/usr/local/bin/hackappd
+	rm -f cmd/hackapp/hackapp; \
+	rm -f cli/cli
+	#rm -f packaging/root/usr/local/bin/hackappd
 
 docker_run_db:
 
